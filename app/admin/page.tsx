@@ -5,6 +5,7 @@ import { RegistrationsTable } from "@/components/admin/RegistrationsTable";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { YONALISH_LABELS, YOSH_GURUH_LABELS } from "@/lib/validations";
 import { hasAdminSession } from "@/lib/admin-auth";
+import type { Royxat } from "@prisma/client";
 
 interface SearchParams {
   holat?: string;
@@ -55,13 +56,13 @@ export default async function AdminPage({
       db.royxat.count(),
     ]);
 
-    royxatlar = dbRoyxatlar.map((r) => ({
+    royxatlar = dbRoyxatlar.map((r: Royxat) => ({
       ...r,
       yoshGuruhi: r.yoshGuruhi as string,
       holat: r.holat as "KUTILMOQDA" | "TASDIQLANDI" | "RAD_ETILDI",
     }));
     totalCount = dbTotal;
-    holatMap = Object.fromEntries(stats.map((s) => [s.holat, s._count._all]));
+    holatMap = Object.fromEntries(stats.map((s: { holat: string; _count: { _all: number } }) => [s.holat, s._count._all]));
   } catch (error) {
     console.error("[admin-page] failed to load dashboard data", error);
   }
