@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum YoshGruhi {
+  YOSH_9_11
+  YOSH_12_14
+  YOSH_9_14
+}
+
+enum Yonalish {
+  MATEMATIKA
+  TYPING
+}
+
+enum Holat {
+  KUTILMOQDA
+  TASDIQLANDI
+  RAD_ETILDI
+}
+
+model Royxat {
+  id              String    @id @default(cuid())
+  participantId   String?   @unique @db.VarChar(5)
+  ism             String    @db.VarChar(80)
+  familiya        String    @db.VarChar(80)
+  otasiningIsmi   String    @db.VarChar(80)
+  telefon         String    @unique @db.VarChar(13)
+  yonalish        Yonalish
+  yoshGuruhi      YoshGruhi
+  resultStatus    String?   @db.VarChar(80)
+  resultScore     Int?
+  resultNote      String?   @db.VarChar(500)
+  resultUpdatedAt DateTime?
+  holat           Holat     @default(KUTILMOQDA)
+  createdAt       DateTime  @default(now())
+
+  @@index([participantId])
+  @@index([holat])
+  @@index([yoshGuruhi])
+  @@index([createdAt])
+}
+
+model IdSequence {
+  key                 String   @id @default("main") @db.VarChar(16)
+  nextMathLetterIndex Int      @default(0)
+  nextMathNumberIndex Int      @default(0)
+  nextTypingNumberIndex Int    @default(0)
+  updatedAt           DateTime @updatedAt
+}
