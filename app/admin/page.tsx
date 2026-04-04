@@ -5,7 +5,6 @@ import { RegistrationsTable } from "@/components/admin/RegistrationsTable";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { YONALISH_LABELS, YOSH_GURUH_LABELS } from "@/lib/validations";
 import { hasAdminSession } from "@/lib/admin-auth";
-import type { Royxat } from "@prisma/client";
 
 interface SearchParams {
   holat?: string;
@@ -56,7 +55,7 @@ export default async function AdminPage({
       db.royxat.count(),
     ]);
 
-    royxatlar = dbRoyxatlar.map((r: Royxat) => ({
+    royxatlar = dbRoyxatlar.map((r: (typeof royxatlar)[number]) => ({
       ...r,
       yoshGuruhi: r.yoshGuruhi as string,
       holat: r.holat as "KUTILMOQDA" | "TASDIQLANDI" | "RAD_ETILDI",
