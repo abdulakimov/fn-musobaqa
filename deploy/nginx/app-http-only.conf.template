@@ -1,5 +1,5 @@
 upstream next_upstream {
-  server app:3000;
+  server fn-musobaqa-app:3000;
   keepalive 64;
 }
 
