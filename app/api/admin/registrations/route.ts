@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
       "Sana",
     ].join(",");
 
-    const rows = royxatlar.map((r) =>
+    const rows = royxatlar.map((r: (typeof royxatlar)[number]) =>
       [
         escapeCsv(r.id),
         escapeCsv(r.participantId ?? ""),
