@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -19,7 +19,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,7 +59,24 @@ function formatAdminDate(value: string | null) {
   return `${day}.${month}.${year}`;
 }
 
-function StatusCell({ id, holat }: { id: string; holat: Holat }) {
+function getResultSummary(row: Royxat) {
+  const status = row.resultStatus?.trim();
+  const score = row.resultScore;
+  if (!status && score === null) return "E'lon qilinmagan";
+  if (status && score !== null) return `${status} (${score})`;
+  if (status) return status;
+  return `Ball: ${score}`;
+}
+
+function StatusCell({
+  id,
+  holat,
+  onUpdated,
+}: {
+  id: string;
+  holat: Holat;
+  onUpdated: (next: Holat) => void;
+}) {
   const [current, setCurrent] = useState<Holat>(holat);
   const [loading, setLoading] = useState(false);
 
@@ -74,6 +90,7 @@ function StatusCell({ id, holat }: { id: string; holat: Holat }) {
       });
       if (res.ok) {
         setCurrent(newHolat);
+        onUpdated(newHolat);
         toast.success("Holat yangilandi");
       } else {
         toast.error("Xatolik yuz berdi");
@@ -104,27 +121,41 @@ function StatusCell({ id, holat }: { id: string; holat: Holat }) {
   );
 }
 
-function ResultEditor({
-  id,
-  initialStatus,
-  initialScore,
-  initialNote,
-  initialUpdatedAt,
+function ResultDialog({
+  row,
+  open,
+  onOpenChange,
+  onSaved,
 }: {
-  id: string;
-  initialStatus: string | null;
-  initialScore: number | null;
-  initialNote: string | null;
-  initialUpdatedAt: string | null;
+  row: Royxat | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: (id: string, patch: Partial<Royxat>) => void;
 }) {
-  const [status, setStatus] = useState(initialStatus ?? "");
-  const [score, setScore] = useState(initialScore === null ? "" : String(initialScore));
-  const [note, setNote] = useState(initialNote ?? "");
-  const [updatedAt, setUpdatedAt] = useState(initialUpdatedAt);
+  const [status, setStatus] = useState("");
+  const [score, setScore] = useState("");
+  const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
+
+  const seed = useMemo(() => {
+    if (!row) {
+      return { status: "", score: "", note: "" };
+    }
+    return {
+      status: row.resultStatus ?? "",
+      score: row.resultScore === null ? "" : String(row.resultScore),
+      note: row.resultNote ?? "",
+    };
+  }, [row]);
+
+  useMemo(() => {
+    setStatus(seed.status);
+    setScore(seed.score);
+    setNote(seed.note);
+  }, [seed]);
 
   const save = async () => {
+    if (!row) return;
     setLoading(true);
     try {
       const numericScore = score.trim() === "" ? null : Number(score);
@@ -134,7 +165,7 @@ function ResultEditor({
         resultNote: note.trim() || null,
       };
 
-      const res = await fetch(`/api/admin/${id}/result`, {
+      const res = await fetch(`/api/admin/${row.id}/result`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -146,11 +177,13 @@ function ResultEditor({
       }
 
       const json = await res.json();
-      setStatus(json.data.resultStatus ?? "");
-      setScore(json.data.resultScore === null ? "" : String(json.data.resultScore));
-      setNote(json.data.resultNote ?? "");
-      setUpdatedAt(json.data.resultUpdatedAt ?? null);
-      setOpen(false);
+      onSaved(row.id, {
+        resultStatus: json.data.resultStatus ?? null,
+        resultScore: json.data.resultScore ?? null,
+        resultNote: json.data.resultNote ?? null,
+        resultUpdatedAt: json.data.resultUpdatedAt ?? null,
+      });
+      onOpenChange(false);
       toast.success("Natija saqlandi");
     } catch {
       toast.error("Tarmoq xatosi");
@@ -159,71 +192,61 @@ function ResultEditor({
     }
   };
 
-  const hasResult = status.trim() !== "" || score.trim() !== "" || note.trim() !== "";
-
   return (
-    <div className="space-y-1">
-      <p className="text-xs text-muted-foreground">
-        {hasResult ? `${status || "Status"} / ${score || "-"}` : "Hali e'lon qilinmagan"}
-      </p>
-      <p className="text-[11px] text-muted-foreground">{formatAdminDate(updatedAt)}</p>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Natijani yangilash</DialogTitle>
+          <DialogDescription>
+            {row ? `${row.familiya} ${row.ism} uchun natija` : "Natija"}
+          </DialogDescription>
+        </DialogHeader>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger className="inline-flex items-center gap-1 text-xs font-medium text-electric-blue hover:underline">
-          <PencilLineIcon className="h-3 w-3" /> Natijani tahrirlash
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Natijani yangilash</DialogTitle>
-            <DialogDescription>Status, ball va izohni kiriting.</DialogDescription>
-          </DialogHeader>
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-muted-foreground">
+            Status
+            <Input
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              placeholder="Masalan: Finalga o'tdi"
+              className="mt-1 h-10"
+            />
+          </label>
 
-          <div className="space-y-3">
-            <label className="block text-xs font-medium text-muted-foreground">
-              Status
-              <Input
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                placeholder="Masalan: Finalga o'tdi"
-                className="mt-1 h-10"
-              />
-            </label>
+          <label className="block text-xs font-medium text-muted-foreground">
+            Ball
+            <Input
+              type="number"
+              value={score}
+              min={0}
+              max={1000}
+              onChange={(e) => setScore(e.target.value)}
+              placeholder="Masalan: 87"
+              className="mt-1 h-10"
+            />
+          </label>
 
-            <label className="block text-xs font-medium text-muted-foreground">
-              Ball
-              <Input
-                type="number"
-                value={score}
-                min={0}
-                max={1000}
-                onChange={(e) => setScore(e.target.value)}
-                placeholder="Masalan: 87"
-                className="mt-1 h-10"
-              />
-            </label>
+          <label className="block text-xs font-medium text-muted-foreground">
+            Izoh
+            <Textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Qo'shimcha izoh"
+              className="mt-1 min-h-24"
+            />
+          </label>
+        </div>
 
-            <label className="block text-xs font-medium text-muted-foreground">
-              Izoh
-              <Textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Qo'shimcha izoh"
-                className="mt-1 min-h-24"
-              />
-            </label>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
-              Bekor qilish
-            </Button>
-            <Button onClick={save} disabled={loading} className="bg-electric-blue text-background hover:bg-electric-blue/90">
-              {loading ? "Saqlanmoqda..." : "Saqlash"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            Bekor qilish
+          </Button>
+          <Button onClick={save} disabled={loading} className="bg-electric-blue text-background hover:bg-electric-blue/90">
+            {loading ? "Saqlanmoqda..." : "Saqlash"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -232,63 +255,124 @@ interface RegistrationsTableProps {
 }
 
 export function RegistrationsTable({ data }: RegistrationsTableProps) {
-  if (data.length === 0) {
+  const [rows, setRows] = useState(data);
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
+
+  const editingRow = rows.find((r) => r.id === editingRowId) ?? null;
+
+  const patchRow = (id: string, patch: Partial<Royxat>) => {
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  };
+
+  if (rows.length === 0) {
     return <div className="py-16 text-center text-muted-foreground">Hozircha ro&apos;yxatdan o&apos;tgan ishtirokchilar yo&apos;q.</div>;
   }
 
   return (
-    <div className="ui-surface overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border bg-muted/30">
-            {["ID", "F.I.Sh", "Telefon", "Yo'nalish", "Yosh guruhi", "Holat", "Natija", "Sana"].map((h) => (
-              <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {data.map((r) => (
-            <tr key={r.id} className="transition-colors hover:bg-muted/20">
-              <td className="px-4 py-3">
-                <Badge variant="outline" className="text-xs font-semibold text-electric-blue">
-                  {r.participantId ?? "-"}
-                </Badge>
-              </td>
-              <td className="whitespace-nowrap px-4 py-3 font-medium">
-                {r.familiya} {r.ism} {r.otasiningIsmi}
-              </td>
-              <td className="px-4 py-3 text-muted-foreground">{r.telefon}</td>
-              <td className="px-4 py-3">
-                <Badge variant="outline" className="text-xs">
-                  {YONALISH_LABELS[r.yonalish] ?? r.yonalish}
-                </Badge>
-              </td>
-              <td className="px-4 py-3">
-                <Badge variant="outline" className="text-xs">
-                  {YOSH_GURUH_LABELS[r.yoshGuruhi] ?? r.yoshGuruhi}
-                </Badge>
-              </td>
-              <td className="px-4 py-3">
-                <StatusCell id={r.id} holat={r.holat} />
-              </td>
-              <td className="px-4 py-3">
-                <ResultEditor
-                  id={r.id}
-                  initialStatus={r.resultStatus}
-                  initialScore={r.resultScore}
-                  initialNote={r.resultNote}
-                  initialUpdatedAt={r.resultUpdatedAt}
-                />
-              </td>
-              <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                {formatAdminDate(r.createdAt)}
-              </td>
+    <>
+      <div className="space-y-3 md:hidden">
+        {rows.map((r) => (
+          <div key={r.id} className="ui-surface space-y-3 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <Badge variant="outline" className="text-xs font-semibold text-electric-blue">
+                {r.participantId ?? "-"}
+              </Badge>
+              <span className="text-xs text-muted-foreground">{formatAdminDate(r.createdAt)}</span>
+            </div>
+            <p className="text-sm font-semibold">{r.familiya} {r.ism} {r.otasiningIsmi}</p>
+            <p className="text-xs text-muted-foreground">{r.telefon}</p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline" className="text-xs">{YONALISH_LABELS[r.yonalish] ?? r.yonalish}</Badge>
+              <Badge variant="outline" className="text-xs">{YOSH_GURUH_LABELS[r.yoshGuruhi] ?? r.yoshGuruhi}</Badge>
+            </div>
+            <StatusCell id={r.id} holat={r.holat} onUpdated={(next) => patchRow(r.id, { holat: next })} />
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">{getResultSummary(r)}</p>
+              <button
+                type="button"
+                onClick={() => setEditingRowId(r.id)}
+                className="inline-flex items-center gap-1 text-xs font-medium text-electric-blue hover:underline"
+              >
+                <PencilLineIcon className="h-3 w-3" /> Natijani tahrirlash
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="ui-surface hidden overflow-x-auto md:block">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/30">
+              {[
+                "ID",
+                "Ishtirokchi",
+                "Aloqa",
+                "Yo'nalish",
+                "Holat",
+                "Natija",
+                "Sana",
+                "Amal",
+              ].map((h) => (
+                <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+                  {h}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.map((r) => (
+              <tr key={r.id} className="transition-colors hover:bg-muted/20">
+                <td className="px-4 py-3">
+                  <Badge variant="outline" className="text-xs font-semibold text-electric-blue">
+                    {r.participantId ?? "-"}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <p className="font-medium">{r.familiya} {r.ism} {r.otasiningIsmi}</p>
+                </td>
+                <td className="px-4 py-3">
+                  <p className="text-muted-foreground">{r.telefon}</p>
+                  <p className="text-xs text-muted-foreground">{YOSH_GURUH_LABELS[r.yoshGuruhi] ?? r.yoshGuruhi}</p>
+                </td>
+                <td className="px-4 py-3">
+                  <Badge variant="outline" className="text-xs">
+                    {YONALISH_LABELS[r.yonalish] ?? r.yonalish}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <StatusCell id={r.id} holat={r.holat} onUpdated={(next) => patchRow(r.id, { holat: next })} />
+                </td>
+                <td className="px-4 py-3">
+                  <p className="text-xs text-muted-foreground">{getResultSummary(r)}</p>
+                  <p className="text-[11px] text-muted-foreground">{formatAdminDate(r.resultUpdatedAt)}</p>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
+                  {formatAdminDate(r.createdAt)}
+                </td>
+                <td className="px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingRowId(r.id)}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-electric-blue hover:underline"
+                  >
+                    <PencilLineIcon className="h-3 w-3" /> Tahrirlash
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <ResultDialog
+        row={editingRow}
+        open={Boolean(editingRow)}
+        onOpenChange={(open) => {
+          if (!open) setEditingRowId(null);
+        }}
+        onSaved={patchRow}
+      />
+    </>
   );
 }
