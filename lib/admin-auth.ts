@@ -1,24 +1,41 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
 
-function getAdminSecret() {
-  const secret = process.env.ADMIN_SECRET_KEY;
-  if (!secret) {
-    throw new Error("ADMIN_SECRET_KEY is not set");
+function getRequiredAdminCredentials() {
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!username || !password) {
+    throw new Error("ADMIN_USERNAME or ADMIN_PASSWORD is not set");
   }
-  return secret;
+
+  return { username, password };
 }
 
 function getSessionSecret() {
-  return process.env.ADMIN_SESSION_SECRET ?? getAdminSecret();
+  return process.env.ADMIN_SESSION_SECRET ?? getRequiredAdminCredentials().password;
+}
+
+function sha256(value: string) {
+  return createHash("sha256").update(value).digest();
+}
+
+export function verifyAdminCredentials(username: string, password: string) {
+  const creds = getRequiredAdminCredentials();
+  const leftUser = sha256(username);
+  const rightUser = sha256(creds.username);
+  const leftPass = sha256(password);
+  const rightPass = sha256(creds.password);
+
+  return timingSafeEqual(leftUser, rightUser) && timingSafeEqual(leftPass, rightPass);
 }
 
 export function createAdminSessionValue() {
-  const key = getAdminSecret();
+  const { username, password } = getRequiredAdminCredentials();
   const sessionSecret = getSessionSecret();
-  return createHmac("sha256", sessionSecret).update(key).digest("hex");
+  return createHmac("sha256", sessionSecret).update(`${username}:${password}`).digest("hex");
 }
 
 export function isValidAdminSession(value?: string | null) {

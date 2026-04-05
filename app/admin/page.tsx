@@ -1,5 +1,6 @@
 ﻿import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { RegistrationsTable } from "@/components/admin/RegistrationsTable";
 import { ExportButton } from "@/components/admin/ExportButton";
@@ -10,6 +11,22 @@ interface SearchParams {
   holat?: string;
   yoshGuruhi?: string;
   yonalish?: string;
+  q?: string;
+}
+
+const HOLAT_VALUES = ["KUTILMOQDA", "TASDIQLANDI", "RAD_ETILDI"] as const;
+const YOSH_VALUES = ["YOSH_9_11", "YOSH_12_14", "YOSH_9_14"] as const;
+const YONALISH_VALUES = ["MATEMATIKA", "TYPING"] as const;
+
+function getSanitizedSearchQuery(raw: string | undefined) {
+  const value = (raw ?? "").trim();
+  if (!value) return "";
+  return value.slice(0, 80);
+}
+
+function parseEnum<T extends readonly string[]>(raw: string | undefined, values: T): T[number] | undefined {
+  if (!raw) return undefined;
+  return (values as readonly string[]).includes(raw) ? (raw as T[number]) : undefined;
 }
 
 export default async function AdminPage({
@@ -18,16 +35,48 @@ export default async function AdminPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+  const holat = parseEnum(params.holat, HOLAT_VALUES);
+  const yoshGuruhi = parseEnum(params.yoshGuruhi, YOSH_VALUES);
+  const yonalish = parseEnum(params.yonalish, YONALISH_VALUES);
+  const searchQuery = getSanitizedSearchQuery(params.q);
   const store = await cookies();
 
   if (!hasAdminSession(store)) {
     redirect("/admin/login");
   }
 
-  const where: Record<string, unknown> = {};
-  if (params.holat) where.holat = params.holat;
-  if (params.yoshGuruhi) where.yoshGuruhi = params.yoshGuruhi;
-  if (params.yonalish) where.yonalish = params.yonalish;
+  const where: Prisma.RoyxatWhereInput = {};
+  if (holat) where.holat = holat;
+  if (yoshGuruhi) where.yoshGuruhi = yoshGuruhi;
+  if (yonalish) where.yonalish = yonalish;
+  if (searchQuery) {
+    where.OR = [
+      { ism: { contains: searchQuery, mode: "insensitive" } },
+      { familiya: { contains: searchQuery, mode: "insensitive" } },
+      { participantId: { contains: searchQuery, mode: "insensitive" } },
+    ];
+  }
+
+  const buildAdminHref = (updates: Partial<Record<keyof SearchParams, string | undefined>>) => {
+    const next: SearchParams = {
+      holat,
+      yoshGuruhi,
+      yonalish,
+      q: searchQuery || undefined,
+      ...updates,
+    };
+
+    const query = new URLSearchParams();
+    (["holat", "yoshGuruhi", "yonalish", "q"] as const).forEach((key) => {
+      const value = next[key];
+      if (typeof value === "string" && value.trim()) {
+        query.set(key, value);
+      }
+    });
+
+    const qs = query.toString();
+    return `/admin${qs ? `?${qs}` : ""}`;
+  };
 
   let royxatlar: Array<{
     id: string;
@@ -82,19 +131,49 @@ export default async function AdminPage({
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="flex-1 font-display text-xl font-bold">
-          Ro&apos;yxatdan o&apos;tganlar
-          <span className="ml-2 text-base font-normal text-muted-foreground">({royxatlar.length})</span>
-        </h1>
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="flex-1 font-display text-xl font-bold">
+            Ro&apos;yxatdan o&apos;tganlar
+            <span className="ml-2 text-base font-normal text-muted-foreground">({royxatlar.length})</span>
+          </h1>
+
+          <ExportButton
+            filters={{
+              ...(holat ? { holat } : {}),
+              ...(yoshGuruhi ? { yoshGuruhi } : {}),
+              ...(yonalish ? { yonalish } : {}),
+              ...(searchQuery ? { q: searchQuery } : {}),
+            }}
+          />
+        </div>
+
+        <form action="/admin" method="get" className="flex w-full flex-wrap gap-2">
+          {holat ? <input type="hidden" name="holat" value={holat} /> : null}
+          {yoshGuruhi ? <input type="hidden" name="yoshGuruhi" value={yoshGuruhi} /> : null}
+          {yonalish ? <input type="hidden" name="yonalish" value={yonalish} /> : null}
+          <input
+            type="search"
+            name="q"
+            defaultValue={searchQuery}
+            placeholder="Qidirish: ism, familiya, participant ID"
+            className="h-9 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-electric-blue/60 focus:ring-2 focus:ring-electric-blue/30 md:flex-1"
+          />
+          <button
+            type="submit"
+            className="h-9 rounded-xl bg-electric-blue px-4 text-sm font-medium text-white transition-colors hover:bg-[#2F73EA]"
+          >
+            Qidirish
+          </button>
+        </form>
 
         <div className="flex flex-wrap gap-2">
           {["KUTILMOQDA", "TASDIQLANDI", "RAD_ETILDI"].map((h) => (
             <a
               key={h}
-              href={`/admin${params.holat === h ? "" : `?holat=${h}${params.yoshGuruhi ? `&yoshGuruhi=${params.yoshGuruhi}` : ""}${params.yonalish ? `&yonalish=${params.yonalish}` : ""}`}`}
+              href={holat === h ? buildAdminHref({ holat: undefined }) : buildAdminHref({ holat: h })}
               className={`ui-filter-chip ${
-                params.holat === h
+                holat === h
                   ? "border-border bg-electric-blue/10 text-electric-blue"
                   : "text-muted-foreground hover:border-electric-blue/30"
               }`}
@@ -105,9 +184,9 @@ export default async function AdminPage({
           {(Object.entries(YOSH_GURUH_LABELS) as [string, string][]).map(([key, label]) => (
             <a
               key={key}
-              href={`/admin?${params.holat ? `holat=${params.holat}&` : ""}${params.yoshGuruhi === key ? "" : `yoshGuruhi=${key}`}${params.yonalish ? `&yonalish=${params.yonalish}` : ""}`}
+              href={yoshGuruhi === key ? buildAdminHref({ yoshGuruhi: undefined }) : buildAdminHref({ yoshGuruhi: key })}
               className={`ui-filter-chip ${
-                params.yoshGuruhi === key
+                yoshGuruhi === key
                   ? "border-border bg-cyber-purple/10 text-cyber-purple"
                   : "text-muted-foreground hover:border-electric-blue/30"
               }`}
@@ -118,9 +197,9 @@ export default async function AdminPage({
           {(Object.entries(YONALISH_LABELS) as [string, string][]).map(([key, label]) => (
             <a
               key={key}
-              href={`/admin?${params.holat ? `holat=${params.holat}&` : ""}${params.yoshGuruhi ? `yoshGuruhi=${params.yoshGuruhi}&` : ""}${params.yonalish === key ? "" : `yonalish=${key}`}`}
+              href={yonalish === key ? buildAdminHref({ yonalish: undefined }) : buildAdminHref({ yonalish: key })}
               className={`ui-filter-chip ${
-                params.yonalish === key
+                yonalish === key
                   ? "border-border bg-electric-blue/10 text-electric-blue"
                   : "text-muted-foreground hover:border-electric-blue/30"
               }`}
@@ -128,23 +207,12 @@ export default async function AdminPage({
               {label}
             </a>
           ))}
-          {(params.holat || params.yoshGuruhi || params.yonalish) && (
-            <a
-              href="/admin"
-              className="ui-filter-chip text-muted-foreground hover:border-red-300 hover:text-red-400"
-            >
+          {(holat || yoshGuruhi || yonalish || searchQuery) && (
+            <a href="/admin" className="ui-filter-chip text-muted-foreground hover:border-red-300 hover:text-red-400">
               Filtrni o&apos;chirish
             </a>
           )}
         </div>
-
-        <ExportButton
-          filters={{
-            ...(params.holat ? { holat: params.holat } : {}),
-            ...(params.yoshGuruhi ? { yoshGuruhi: params.yoshGuruhi } : {}),
-            ...(params.yonalish ? { yonalish: params.yonalish } : {}),
-          }}
-        />
       </div>
 
       <RegistrationsTable
@@ -157,5 +225,4 @@ export default async function AdminPage({
     </div>
   );
 }
-
 
