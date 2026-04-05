@@ -70,7 +70,9 @@ export function Navbar({ settings, content }: NavbarProps) {
 
   const logoSrc = settings?.logoUrl ?? brandLogo;
   const siteName = settings?.siteName ?? "Robbit Akademiyasi";
-  const navLinks = content?.navbarLinks?.length ? content.navbarLinks : DEFAULT_NAV_LINKS;
+  const navLinksSource = content?.navbarLinks?.length ? content.navbarLinks : DEFAULT_NAV_LINKS;
+  const navLinks = navLinksSource.filter((item) => item.href.startsWith("#"));
+  const safeNavLinks = navLinks.length > 0 ? navLinks : DEFAULT_NAV_LINKS;
   const shouldRenderDrawer = mobileOpen || mobileClosing;
   const mobileDrawer =
     typeof document !== "undefined" && shouldRenderDrawer
@@ -124,7 +126,7 @@ export function Navbar({ settings, content }: NavbarProps) {
               </div>
 
               <nav className="flex flex-1 flex-col gap-1 overflow-y-auto bg-transparent px-5 py-5" aria-label="Mobil navigatsiya">
-                {navLinks.map(({ href, label }) => (
+                {safeNavLinks.map(({ href, label }) => (
                   <a
                     key={`${href}-${label}-mobile`}
                     href={href}
@@ -174,7 +176,7 @@ export function Navbar({ settings, content }: NavbarProps) {
           </Link>
 
           <nav className="hidden items-center gap-6 md:flex" aria-label="Asosiy navigatsiya">
-            {navLinks.map(({ href, label }) => (
+            {safeNavLinks.map(({ href, label }) => (
               <a
                 key={`${href}-${label}`}
                 href={href}
