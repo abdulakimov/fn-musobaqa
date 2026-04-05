@@ -46,15 +46,14 @@ export default async function ProfilePage() {
             <h1 className="font-display text-2xl font-bold">Ishtirokchi profili</h1>
             <p className="text-sm text-muted-foreground">Natijalarni shu joydan kuzatib boring.</p>
           </div>
-          <form action="/profile/logout" method="post">
-            <button
-              type="submit"
-              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-electric-blue"
-            >
-              <LogOutIcon className="h-4 w-4" />
-              Chiqish
-            </button>
-          </form>
+          <Link
+            href="/profile/logout"
+            prefetch={false}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-electric-blue"
+          >
+            <LogOutIcon className="h-4 w-4" />
+            Chiqish
+          </Link>
         </header>
 
         <section className="ui-surface p-5 sm:p-6">
