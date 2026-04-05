@@ -9,19 +9,24 @@ function sanitizeNextPath(nextPath: string | null) {
   return nextPath;
 }
 
-function clearSessionAndRedirect(request: Request, nextPath: string | null) {
+function clearSessionAndRedirect(nextPath: string | null) {
   const safeNext = sanitizeNextPath(nextPath);
-  const response = NextResponse.redirect(new URL(safeNext, request.url), { status: 303 });
+  const response = new NextResponse(null, {
+    status: 303,
+    headers: {
+      Location: safeNext,
+      "Cache-Control": "no-store",
+    },
+  });
   response.cookies.set(PARTICIPANT_SESSION_COOKIE, "", clearedSessionCookieOptions());
-  response.headers.set("Cache-Control", "no-store");
   return response;
 }
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  return clearSessionAndRedirect(request, url.searchParams.get("next"));
+  return clearSessionAndRedirect(url.searchParams.get("next"));
 }
 
-export async function POST(request: Request) {
-  return clearSessionAndRedirect(request, "/");
+export async function POST() {
+  return clearSessionAndRedirect("/");
 }

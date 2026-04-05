@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { z } from "zod";
 import { isValidAdminSession, ADMIN_SESSION_COOKIE } from "@/lib/admin-auth";
 import { getRequestIdFromHeaders, logApiError } from "@/lib/api-log";
+import { buildAdminAbsoluteUrl, shouldRedirectToAdminDomain } from "@/lib/admin-domain";
 
 const statusSchema = z.object({
   holat: z.enum(["KUTILMOQDA", "TASDIQLANDI", "RAD_ETILDI"]),
@@ -16,6 +17,11 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (shouldRedirectToAdminDomain(req.headers)) {
+    const location = buildAdminAbsoluteUrl(`${req.nextUrl.pathname}${req.nextUrl.search}`);
+    return NextResponse.redirect(location, 308);
+  }
+
   const requestId = getRequestIdFromHeaders(req.headers);
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Ruxsat yoq" }, { status: 401, headers: { "x-request-id": requestId } });

@@ -9,7 +9,7 @@
 ## 2) Environment setup
 1. Copy `.env.production.example` to `.env.production`.
 2. Fill all secrets with strong values.
-3. Keep `DOMAIN` and `LETSENCRYPT_EMAIL` correct.
+3. Keep `DOMAIN`, `ADMIN_DOMAIN` and `LETSENCRYPT_EMAIL` correct.
 
 ## 3) First deploy
 ```bash

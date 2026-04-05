@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createAdminSessionValue, ADMIN_SESSION_COOKIE } from "@/lib/admin-auth";
 import { adminSessionCookieOptions } from "@/lib/session-cookie";
+import { buildAdminAbsoluteUrl, shouldRedirectToAdminDomain } from "@/lib/admin-domain";
 
 async function loginAction(formData: FormData) {
   "use server";
@@ -21,6 +22,11 @@ export default async function AdminLoginPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  const reqHeaders = await headers();
+  if (shouldRedirectToAdminDomain(reqHeaders)) {
+    redirect(buildAdminAbsoluteUrl("/admin/login"));
+  }
+
   const params = await searchParams;
 
   return (
