@@ -285,7 +285,7 @@ export const STATIC_SITE_CONTENT: SiteContent = {
   registerPage: {
     backLinkText: "Bosh sahifaga qaytish",
     tagText: "Ro'yxatdan o'tish",
-    title: "Musobaqaga kirish",
+    title: "Ro'yxatdan o'tish",
     subtitle: "18-19-aprel 2026 | Farg'ona viloyati",
     helpPrefixText: "Savolingiz bormi?",
     helpPhone: "78-777-3-777",
