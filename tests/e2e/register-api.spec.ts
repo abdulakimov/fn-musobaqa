@@ -54,3 +54,26 @@ test("register api rejects legacy payload keys", async ({ page }) => {
 
   expect(result.status).toBe(422);
 });
+
+test("register api rejects overlong phone instead of truncating", async ({ page }) => {
+  await page.goto("/register");
+  const result = await page.evaluate(async () => {
+    const payload = {
+      ism: "Test",
+      familiya: "User",
+      otasiningIsmi: "Parent",
+      telefon: "+9989912345678",
+      yonalish: "MATEMATIKA",
+      yoshGuruhi: "YOSH_9_11",
+    };
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return { status: res.status, json: await res.json() };
+  });
+
+  expect(result.status).toBe(422);
+  expect(result.json?.errors?.fieldErrors?.telefon?.length ?? 0).toBeGreaterThan(0);
+});

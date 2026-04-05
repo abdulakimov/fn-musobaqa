@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatUzPhone, UZ_PREFIX } from "@/lib/phone";
@@ -104,6 +105,13 @@ export function ProfileLoginForm({
       >
         {loading ? "Tekshirilmoqda..." : "Kirish"}
       </button>
+
+      <p className="text-center text-sm text-muted-foreground">
+        Hali ro&apos;yxatdan o&apos;tmaganmisiz?{" "}
+        <Link href="/register" className="font-medium text-electric-blue hover:underline">
+          Ro&apos;yxatdan o&apos;tish
+        </Link>
+      </p>
     </form>
   );
 }

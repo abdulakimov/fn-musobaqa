@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createAdminSessionValue, ADMIN_SESSION_COOKIE } from "@/lib/admin-auth";
+import { adminSessionCookieOptions } from "@/lib/session-cookie";
 
 async function loginAction(formData: FormData) {
   "use server";
@@ -11,13 +12,7 @@ async function loginAction(formData: FormData) {
   }
 
   const store = await cookies();
-  store.set(ADMIN_SESSION_COOKIE, createAdminSessionValue(), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 8,
-  });
+  store.set(ADMIN_SESSION_COOKIE, createAdminSessionValue(), adminSessionCookieOptions());
   redirect("/admin");
 }
 

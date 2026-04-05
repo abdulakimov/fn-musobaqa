@@ -35,7 +35,7 @@ export default async function ProfilePage() {
   });
 
   if (!participant) {
-    redirect("/profile/login?error=credentials");
+    redirect("/profile/logout?next=/profile/login%3Ferror%3Dcredentials");
   }
 
   return (

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
+import { PARTICIPANT_MAX_AGE_SECONDS } from "@/lib/session-cookie";
 
 export const PARTICIPANT_SESSION_COOKIE = "participant_session";
 
@@ -11,20 +12,34 @@ function getParticipantSessionSecret() {
   return secret;
 }
 
-function signParticipantKey(participantRecordId: string) {
-  return createHmac("sha256", getParticipantSessionSecret()).update(participantRecordId).digest("hex");
+function signParticipantPayload(payload: string) {
+  return createHmac("sha256", getParticipantSessionSecret()).update(payload).digest("hex");
 }
 
 export function createParticipantSessionValue(participantRecordId: string) {
-  return `${participantRecordId}.${signParticipantKey(participantRecordId)}`;
+  const exp = Math.floor(Date.now() / 1000) + PARTICIPANT_MAX_AGE_SECONDS;
+  const payload = `${participantRecordId}.${exp}`;
+  const signature = signParticipantPayload(payload);
+  return `${payload}.${signature}`;
 }
 
 export function getParticipantRecordIdFromSession(value?: string | null) {
   if (!value) return null;
-  const [participantRecordId, signature] = value.split(".");
-  if (!participantRecordId || !signature) return null;
+  const parts = value.split(".");
+  if (parts.length !== 3) return null;
 
-  const expectedSignature = signParticipantKey(participantRecordId);
+  const [participantRecordId, expRaw, signature] = parts;
+  if (!participantRecordId || !expRaw || !signature) return null;
+  if (!/^\d+$/.test(expRaw)) return null;
+  if (!/^[a-f0-9]{64}$/i.test(signature)) return null;
+
+  const exp = Number(expRaw);
+  const now = Math.floor(Date.now() / 1000);
+  if (!Number.isFinite(exp) || exp <= now) return null;
+
+  const payload = `${participantRecordId}.${expRaw}`;
+  const expectedSignature = signParticipantPayload(payload);
+
   const left = Buffer.from(signature);
   const right = Buffer.from(expectedSignature);
 

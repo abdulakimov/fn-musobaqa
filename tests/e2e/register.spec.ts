@@ -32,3 +32,19 @@ test("typing direction forces 9-14 age group", async ({ page }) => {
 
   await expect(page.getByRole("combobox").nth(1)).toContainText("9-14 yosh");
 });
+
+test("register accepts Uzbek apostrophe variants and cyrillic names", async ({ page }) => {
+  await page.goto("/register");
+
+  await page.getByPlaceholder("Abdulloh").fill("Ғолиб");
+  await page.getByPlaceholder("Karimov").fill("Gʻaniyev");
+  await page.getByPlaceholder("Bahodir o'g'li").fill("Atham oʻgʻli");
+  await page.getByPlaceholder("+998 91-234-56-73").fill("901112233");
+  await page.getByRole("combobox").nth(0).click();
+  await page.getByRole("option", { name: "Matematika" }).click();
+  await page.getByRole("combobox").nth(1).click();
+  await page.getByRole("option", { name: "12-14 yosh" }).click();
+  await page.getByRole("button", { name: /davom etish/i }).click();
+
+  await expect(page.getByText(/ma'lumotlarni tasdiqlang/i)).toBeVisible();
+});

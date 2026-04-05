@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "lucide-react";
 import type { RegisterFormContent } from "@/lib/site-content";
-import { extractUzLocalDigits, formatUzPhone, UZ_PREFIX } from "@/lib/phone";
+import { formatUzPhone, UZ_PREFIX } from "@/lib/phone";
 
 interface Props {
   defaultValues: Partial<Step1Data>;
@@ -60,8 +60,7 @@ export function Step1Personal({ defaultValues, onNext, content }: Props) {
   });
 
   const onSubmit = (values: Step1Data) => {
-    const normalized = { ...values, telefon: `${UZ_PREFIX}${extractUzLocalDigits(values.telefon)}` };
-    onNext(normalized);
+    onNext(values);
   };
 
   const selectedDirection = useWatch({ control: form.control, name: "yonalish" });

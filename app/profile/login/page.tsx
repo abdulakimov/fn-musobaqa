@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { ProfileLoginForm } from "@/components/profile/ProfileLoginForm";
+import { db } from "@/lib/db";
 import {
   getParticipantRecordIdFromSession,
   PARTICIPANT_SESSION_COOKIE,
@@ -16,7 +17,16 @@ export default async function ProfileLoginPage({
   const participantRecordId = getParticipantRecordIdFromSession(sessionValue);
 
   if (participantRecordId) {
-    redirect("/profile");
+    const participantExists = await db.royxat.findUnique({
+      where: { id: participantRecordId },
+      select: { id: true },
+    });
+
+    if (participantExists) {
+      redirect("/profile");
+    }
+
+    redirect("/profile/logout?next=/profile/login%3Ferror%3Dcredentials");
   }
 
   const params = await searchParams;

@@ -23,6 +23,7 @@ export function createAdminSessionValue() {
 
 export function isValidAdminSession(value?: string | null) {
   if (!value) return false;
+  if (!/^[a-f0-9]{64}$/i.test(value)) return false;
   const expected = createAdminSessionValue();
   const left = Buffer.from(value);
   const right = Buffer.from(expected);

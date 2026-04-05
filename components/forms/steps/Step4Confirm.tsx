@@ -22,6 +22,23 @@ interface Props {
   content?: RegisterFormContent;
 }
 
+function getFirstFieldError(errors: unknown) {
+  if (!errors || typeof errors !== "object") return null;
+  const fieldErrors = (errors as { fieldErrors?: Record<string, unknown> }).fieldErrors;
+  if (!fieldErrors || typeof fieldErrors !== "object") return null;
+
+  for (const value of Object.values(fieldErrors)) {
+    if (Array.isArray(value)) {
+      const firstMessage = value.find((item) => typeof item === "string");
+      if (typeof firstMessage === "string" && firstMessage.trim()) {
+        return firstMessage;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function Step4Confirm({ data, onBack, content }: Props) {
   const common = content?.common;
   const step4 = content?.step4;
@@ -74,6 +91,9 @@ export function Step4Confirm({ data, onBack, content }: Props) {
         router.replace(`/profile/login?${params.toString()}`);
       } else if (res.status === 409) {
         toast.error("Bu telefon raqam allaqachon ro'yxatdan o'tgan");
+      } else if (res.status === 422) {
+        const firstFieldError = getFirstFieldError(json?.errors);
+        toast.error(firstFieldError ?? json?.error ?? "Ma'lumotlarda xatolik bor. Iltimos tekshirib qayta yuboring.");
       } else {
         toast.error(json.error ?? "Xatolik yuz berdi, qayta urinib ko'ring");
       }

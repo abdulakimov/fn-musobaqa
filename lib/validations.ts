@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { normalizeUzPhone } from "@/lib/phone";
+import { tryNormalizeUzPhone } from "@/lib/phone";
 
-const NAME_REGEX = /^[A-Za-z'`\-\s]+$/;
+const NAME_REGEX = /^[\p{L}'’ʻ`\-\s]+$/u;
 
 export function normalizePhone(input: string) {
-  return normalizeUzPhone(input);
+  const normalized = tryNormalizeUzPhone(input);
+  return normalized ?? input.trim();
 }
 
 export const step1Schema = z.object({

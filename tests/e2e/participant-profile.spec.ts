@@ -114,3 +114,83 @@ test("participant can login with phone and participantId", async ({ page }) => {
   await expect(page.getByText("Ishtirokchi profili")).toBeVisible();
   await expect(page.getByText(participantId)).toBeVisible();
 });
+
+test("profile logout redirects to home page", async ({ page }) => {
+  await page.goto("/register");
+
+  const registerResult = await page.evaluate(async () => {
+    const suffix = `${Date.now()}`.slice(-5);
+    const payload = {
+      ism: "Akmal",
+      familiya: "Qodirov",
+      otasiningIsmi: "Anvar o'g'li",
+      telefon: `+99893${suffix}44`,
+      yonalish: "TYPING",
+      yoshGuruhi: "YOSH_9_14",
+    };
+
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    return { status: res.status, json: await res.json(), phone: payload.telefon };
+  });
+
+  expect(registerResult.status).toBe(201);
+
+  const participantId = registerResult.json.participantId as string;
+  const phone = registerResult.phone;
+
+  await page.goto(`/profile/login?phone=${encodeURIComponent(phone)}&id=${encodeURIComponent(participantId)}`);
+  await page.getByRole("button", { name: "Kirish" }).click();
+  await expect(page).toHaveURL(/\/profile$/);
+
+  await page.getByRole("button", { name: "Chiqish" }).click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test("invalid participant session cookie does not cause profile login loop", async ({ page, context }) => {
+  await context.addCookies([
+    {
+      name: "participant_session",
+      value: "legacy.invalid",
+      url: "http://localhost:3200/",
+      httpOnly: true,
+      sameSite: "Lax",
+    },
+  ]);
+
+  await page.goto("/profile/login");
+  await expect(page).toHaveURL(/\/profile\/login$/);
+  await expect(page.getByRole("heading", { name: /profilga kirish/i })).toBeVisible();
+});
+
+test("profile login api validates phone and participantId formats", async ({ page }) => {
+  await page.goto("/profile/login");
+
+  const invalidPhone = await page.evaluate(async () => {
+    const res = await fetch("/api/profile/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ telefon: "+9989912345678", participantId: "A1111" }),
+    });
+    return { status: res.status, json: await res.json() };
+  });
+
+  expect(invalidPhone.status).toBe(422);
+  expect(invalidPhone.json?.code).toBe("PHONE_INVALID");
+
+  const invalidId = await page.evaluate(async () => {
+    const res = await fetch("/api/profile/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ telefon: "+998901112233", participantId: "ZZZZ" }),
+    });
+    return { status: res.status, json: await res.json() };
+  });
+
+  expect(invalidId.status).toBe(422);
+  expect(invalidId.json?.code).toBe("ID_INVALID");
+});

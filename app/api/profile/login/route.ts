@@ -5,6 +5,7 @@ import {
   createParticipantSessionValue,
   PARTICIPANT_SESSION_COOKIE,
 } from "@/lib/participant-auth";
+import { participantSessionCookieOptions } from "@/lib/session-cookie";
 import { getRequestIdFromHeaders, logApiError } from "@/lib/api-log";
 
 const PARTICIPANT_ID_REGEX = /^(?:T|[ABCD])[1-9]{4}$/;
@@ -54,13 +55,11 @@ export async function POST(req: NextRequest) {
     }
 
     const response = NextResponse.json({ success: true }, { headers: { "x-request-id": requestId } });
-    response.cookies.set(PARTICIPANT_SESSION_COOKIE, createParticipantSessionValue(participantByPhone.id), {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-    });
+    response.cookies.set(
+      PARTICIPANT_SESSION_COOKIE,
+      createParticipantSessionValue(participantByPhone.id),
+      participantSessionCookieOptions()
+    );
 
     return response;
   } catch (error) {
