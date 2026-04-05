@@ -15,7 +15,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </button>
         </form>
       </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 xl:px-8">{children}</main>
     </div>
   );
 }

@@ -2,8 +2,9 @@
 import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { RegistrationsTable } from "@/components/admin/RegistrationsTable";
+import { AdminDashboardClient } from "@/components/admin/AdminDashboardClient";
 import { ExportButton } from "@/components/admin/ExportButton";
+import { AdminFilters } from "@/components/admin/AdminFilters";
 import { YONALISH_LABELS, YOSH_GURUH_LABELS } from "@/lib/validations";
 import { hasAdminSession } from "@/lib/admin-auth";
 
@@ -12,11 +13,13 @@ interface SearchParams {
   yoshGuruhi?: string;
   yonalish?: string;
   q?: string;
+  page?: string;
 }
 
 const HOLAT_VALUES = ["KUTILMOQDA", "TASDIQLANDI", "RAD_ETILDI"] as const;
 const YOSH_VALUES = ["YOSH_9_11", "YOSH_12_14", "YOSH_9_14"] as const;
 const YONALISH_VALUES = ["MATEMATIKA", "TYPING"] as const;
+const PAGE_SIZE = 15;
 
 function getSanitizedSearchQuery(raw: string | undefined) {
   const value = (raw ?? "").trim();
@@ -29,6 +32,12 @@ function parseEnum<T extends readonly string[]>(raw: string | undefined, values:
   return (values as readonly string[]).includes(raw) ? (raw as T[number]) : undefined;
 }
 
+function parsePage(raw: string | undefined) {
+  const numeric = Number.parseInt(raw ?? "", 10);
+  if (!Number.isFinite(numeric) || numeric < 1) return 1;
+  return numeric;
+}
+
 export default async function AdminPage({
   searchParams,
 }: {
@@ -39,6 +48,7 @@ export default async function AdminPage({
   const yoshGuruhi = parseEnum(params.yoshGuruhi, YOSH_VALUES);
   const yonalish = parseEnum(params.yonalish, YONALISH_VALUES);
   const searchQuery = getSanitizedSearchQuery(params.q);
+  const requestedPage = parsePage(params.page);
   const store = await cookies();
 
   if (!hasAdminSession(store)) {
@@ -57,27 +67,6 @@ export default async function AdminPage({
     ];
   }
 
-  const buildAdminHref = (updates: Partial<Record<keyof SearchParams, string | undefined>>) => {
-    const next: SearchParams = {
-      holat,
-      yoshGuruhi,
-      yonalish,
-      q: searchQuery || undefined,
-      ...updates,
-    };
-
-    const query = new URLSearchParams();
-    (["holat", "yoshGuruhi", "yonalish", "q"] as const).forEach((key) => {
-      const value = next[key];
-      if (typeof value === "string" && value.trim()) {
-        query.set(key, value);
-      }
-    });
-
-    const qs = query.toString();
-    return `/admin${qs ? `?${qs}` : ""}`;
-  };
-
   let royxatlar: Array<{
     id: string;
     participantId: string | null;
@@ -95,14 +84,33 @@ export default async function AdminPage({
     createdAt: Date;
   }> = [];
   let totalCount = 0;
+  let filteredCount = 0;
+  let currentPage = requestedPage;
+  let totalPages = 1;
   let holatMap: Record<string, number> = {};
+  let yoshMap: Record<string, number> = {};
+  let yonalishMap: Record<string, number> = {};
 
   try {
-    const [dbRoyxatlar, stats, dbTotal] = await Promise.all([
-      db.royxat.findMany({ where, orderBy: { createdAt: "desc" } }),
+    const [dbFilteredCount, holatStats, yoshStats, yonalishStats, dbTotal] = await Promise.all([
+      db.royxat.count({ where }),
       db.royxat.groupBy({ by: ["holat"], _count: { _all: true } }),
+      db.royxat.groupBy({ by: ["yoshGuruhi"], _count: { _all: true } }),
+      db.royxat.groupBy({ by: ["yonalish"], _count: { _all: true } }),
       db.royxat.count(),
     ]);
+
+    filteredCount = dbFilteredCount;
+    totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
+    currentPage = Math.min(requestedPage, totalPages);
+    const skip = (currentPage - 1) * PAGE_SIZE;
+
+    const dbRoyxatlar = await db.royxat.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: PAGE_SIZE,
+      skip,
+    });
 
     royxatlar = dbRoyxatlar.map((r: (typeof royxatlar)[number]) => ({
       ...r,
@@ -110,34 +118,24 @@ export default async function AdminPage({
       holat: r.holat as "KUTILMOQDA" | "TASDIQLANDI" | "RAD_ETILDI",
     }));
     totalCount = dbTotal;
-    holatMap = Object.fromEntries(stats.map((s: { holat: string; _count: { _all: number } }) => [s.holat, s._count._all]));
+    holatMap = Object.fromEntries(
+      holatStats.map((s: { holat: string; _count: { _all: number } }) => [s.holat, s._count._all]),
+    );
+    yoshMap = Object.fromEntries(
+      yoshStats.map((s: { yoshGuruhi: string; _count: { _all: number } }) => [s.yoshGuruhi, s._count._all]),
+    );
+    yonalishMap = Object.fromEntries(
+      yonalishStats.map((s: { yonalish: string; _count: { _all: number } }) => [s.yonalish, s._count._all]),
+    );
   } catch (error) {
     console.error("[admin-page] failed to load dashboard data", error);
   }
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {[
-          { label: "Jami", value: totalCount, color: "text-foreground" },
-          { label: "Kutilmoqda", value: holatMap.KUTILMOQDA ?? 0, color: "text-yellow-400" },
-          { label: "Tasdiqlandi", value: holatMap.TASDIQLANDI ?? 0, color: "text-green-400" },
-          { label: "Rad etildi", value: holatMap.RAD_ETILDI ?? 0, color: "text-red-400" },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="ui-surface p-4">
-            <p className="mb-1 text-xs text-muted-foreground">{label}</p>
-            <p className={`font-display text-3xl font-bold ${color}`}>{value}</p>
-          </div>
-        ))}
-      </div>
-
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="flex-1 font-display text-xl font-bold">
-            Ro&apos;yxatdan o&apos;tganlar
-            <span className="ml-2 text-base font-normal text-muted-foreground">({royxatlar.length})</span>
-          </h1>
-
+          <div className="flex-1" />
           <ExportButton
             filters={{
               ...(holat ? { holat } : {}),
@@ -148,79 +146,41 @@ export default async function AdminPage({
           />
         </div>
 
-        <form action="/admin" method="get" className="flex w-full flex-wrap gap-2">
-          {holat ? <input type="hidden" name="holat" value={holat} /> : null}
-          {yoshGuruhi ? <input type="hidden" name="yoshGuruhi" value={yoshGuruhi} /> : null}
-          {yonalish ? <input type="hidden" name="yonalish" value={yonalish} /> : null}
-          <input
-            type="search"
-            name="q"
-            defaultValue={searchQuery}
-            placeholder="Qidirish: ism, familiya, participant ID"
-            className="h-9 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-electric-blue/60 focus:ring-2 focus:ring-electric-blue/30 md:flex-1"
-          />
-          <button
-            type="submit"
-            className="h-9 rounded-xl bg-electric-blue px-4 text-sm font-medium text-white transition-colors hover:bg-[#2F73EA]"
-          >
-            Qidirish
-          </button>
-        </form>
-
-        <div className="flex flex-wrap gap-2">
-          {["KUTILMOQDA", "TASDIQLANDI", "RAD_ETILDI"].map((h) => (
-            <a
-              key={h}
-              href={holat === h ? buildAdminHref({ holat: undefined }) : buildAdminHref({ holat: h })}
-              className={`ui-filter-chip ${
-                holat === h
-                  ? "border-border bg-electric-blue/10 text-electric-blue"
-                  : "text-muted-foreground hover:border-electric-blue/30"
-              }`}
-            >
-              {h === "KUTILMOQDA" ? "Kutilmoqda" : h === "TASDIQLANDI" ? "Tasdiqlandi" : "Rad etildi"}
-            </a>
-          ))}
-          {(Object.entries(YOSH_GURUH_LABELS) as [string, string][]).map(([key, label]) => (
-            <a
-              key={key}
-              href={yoshGuruhi === key ? buildAdminHref({ yoshGuruhi: undefined }) : buildAdminHref({ yoshGuruhi: key })}
-              className={`ui-filter-chip ${
-                yoshGuruhi === key
-                  ? "border-border bg-cyber-purple/10 text-cyber-purple"
-                  : "text-muted-foreground hover:border-electric-blue/30"
-              }`}
-            >
-              {label}
-            </a>
-          ))}
-          {(Object.entries(YONALISH_LABELS) as [string, string][]).map(([key, label]) => (
-            <a
-              key={key}
-              href={yonalish === key ? buildAdminHref({ yonalish: undefined }) : buildAdminHref({ yonalish: key })}
-              className={`ui-filter-chip ${
-                yonalish === key
-                  ? "border-border bg-electric-blue/10 text-electric-blue"
-                  : "text-muted-foreground hover:border-electric-blue/30"
-              }`}
-            >
-              {label}
-            </a>
-          ))}
-          {(holat || yoshGuruhi || yonalish || searchQuery) && (
-            <a href="/admin" className="ui-filter-chip text-muted-foreground hover:border-red-300 hover:text-red-400">
-              Filtrni o&apos;chirish
-            </a>
-          )}
-        </div>
+        <AdminFilters
+          holat={holat}
+          yoshGuruhi={yoshGuruhi}
+          yonalish={yonalish}
+          query={searchQuery}
+          yoshOptions={Object.entries(YOSH_GURUH_LABELS) as [string, string][]}
+          yonalishOptions={Object.entries(YONALISH_LABELS) as [string, string][]}
+        />
       </div>
 
-      <RegistrationsTable
-        data={royxatlar.map((r) => ({
+      <AdminDashboardClient
+        key={`${currentPage}:${holat ?? "all"}:${yoshGuruhi ?? "all"}:${yonalish ?? "all"}:${searchQuery}:${holatMap.KUTILMOQDA ?? 0}:${holatMap.TASDIQLANDI ?? 0}:${holatMap.RAD_ETILDI ?? 0}`}
+        initialRows={royxatlar.map((r) => ({
           ...r,
           createdAt: r.createdAt.toISOString(),
           resultUpdatedAt: r.resultUpdatedAt ? r.resultUpdatedAt.toISOString() : null,
         }))}
+        filteredCount={filteredCount}
+        currentPage={currentPage}
+        pageSize={PAGE_SIZE}
+        totalPages={totalPages}
+        queryState={{
+          holat,
+          yoshGuruhi,
+          yonalish,
+          q: searchQuery || undefined,
+        }}
+        statusCounts={{
+          total: totalCount,
+          KUTILMOQDA: holatMap.KUTILMOQDA ?? 0,
+          TASDIQLANDI: holatMap.TASDIQLANDI ?? 0,
+          RAD_ETILDI: holatMap.RAD_ETILDI ?? 0,
+        }}
+        yoshCounts={yoshMap}
+        yonalishCounts={yonalishMap}
       />
     </div>
   );
