@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import { YONALISH_LABELS, YOSH_GURUH_LABELS } from "@/lib/validations";
 import { isValidAdminSession, ADMIN_SESSION_COOKIE } from "@/lib/admin-auth";
 import { getRequestIdFromHeaders, logApiError } from "@/lib/api-log";
-import { buildAdminAbsoluteUrl, shouldRedirectToAdminDomain } from "@/lib/admin-domain";
 
 function isAuthorized(req: NextRequest) {
   return isValidAdminSession(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -17,11 +16,6 @@ function escapeCsv(value: string) {
 }
 
 export async function GET(req: NextRequest) {
-  if (shouldRedirectToAdminDomain(req.headers)) {
-    const location = buildAdminAbsoluteUrl(`${req.nextUrl.pathname}${req.nextUrl.search}`);
-    return NextResponse.redirect(location, 308);
-  }
-
   const requestId = getRequestIdFromHeaders(req.headers);
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401, headers: { "x-request-id": requestId } });

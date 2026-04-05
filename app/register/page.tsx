@@ -16,6 +16,9 @@ export function generateMetadata(): Metadata {
 
 export default function RegisterPage() {
   const registerPage = STATIC_SITE_CONTENT?.registerPage;
+  const normalizedTitle = registerPage?.title?.trim().toLowerCase();
+  const registerTitle =
+    normalizedTitle === "musobaqaga kirish" ? "Ro'yxatdan o'tish" : registerPage?.title ?? "Ro'yxatdan o'tish";
 
   return (
     <main id="main-content" className="min-h-screen bg-background relative">
@@ -36,7 +39,7 @@ export default function RegisterPage() {
         {/* Header */}
         <SectionMotion preset="fadeUp" delay={0.06} className="mx-auto mb-10 max-w-2xl text-center">
           <h1 className="gradient-text mb-3 font-hero text-3xl leading-tight font-black sm:text-4xl">
-            {registerPage?.title ?? "Ro'yxatdan o'tish"}
+            {registerTitle}
           </h1>
           <p className="text-muted-foreground text-sm">
             {registerPage?.subtitle ?? "18-19-aprel 2026 | Farg'ona viloyati"}

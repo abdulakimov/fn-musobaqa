@@ -10,8 +10,8 @@ set -a
 . ./.env.production
 set +a
 
-if [ -z "${DOMAIN:-}" ] || [ -z "${ADMIN_DOMAIN:-}" ] || [ -z "${LETSENCRYPT_EMAIL:-}" ]; then
-  echo "DOMAIN, ADMIN_DOMAIN va LETSENCRYPT_EMAIL to'ldirilishi shart"
+if [ -z "${DOMAIN:-}" ] || [ -z "${LETSENCRYPT_EMAIL:-}" ]; then
+  echo "DOMAIN va LETSENCRYPT_EMAIL to'ldirilishi shart"
   exit 1
 fi
 
@@ -23,11 +23,10 @@ docker compose -f docker-compose.prod.yml run --rm certbot certonly \
   --webroot -w /var/www/certbot \
   --email "$LETSENCRYPT_EMAIL" \
   -d "$DOMAIN" \
-  -d "$ADMIN_DOMAIN" \
   --agree-tos --no-eff-email
 
 echo "[3/4] TLS template ga o'tish"
 NGINX_TEMPLATE=app-tls.conf.template docker compose -f docker-compose.prod.yml up -d nginx certbot
 
 echo "[4/4] Tayyor"
-echo "Nginx TLS yoqildi: https://$DOMAIN va https://$ADMIN_DOMAIN"
+echo "Nginx TLS yoqildi: https://$DOMAIN"

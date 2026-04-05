@@ -1,7 +1,7 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { tryNormalizeUzPhone } from "@/lib/phone";
 
-const NAME_REGEX = /^[\p{L}'’ʻ`\-\s]+$/u;
+const NAME_REGEX = /^[\p{L}'`\u2019\u02BB\-\s]+$/u;
 
 export function normalizePhone(input: string) {
   const normalized = tryNormalizeUzPhone(input);
@@ -73,3 +73,4 @@ export const YONALISH_LABELS: Record<string, string> = {
   MATEMATIKA: "Matematika",
   TYPING: "Typing",
 };
+

@@ -1,22 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getAdminDomain, getRequestHost } from "@/lib/admin-domain";
 
 export function proxy(request: NextRequest) {
-  const host = getRequestHost(request.headers);
-  const appDomain = process.env.DOMAIN?.trim().toLowerCase();
-  const adminDomain = getAdminDomain();
-  const pathWithQuery = `${request.nextUrl.pathname}${request.nextUrl.search}`;
-  const isAdminPath =
-    request.nextUrl.pathname === "/admin" ||
-    request.nextUrl.pathname.startsWith("/admin/") ||
-    request.nextUrl.pathname === "/api/admin" ||
-    request.nextUrl.pathname.startsWith("/api/admin/");
-
-  if (host && adminDomain && appDomain && host === appDomain && isAdminPath) {
-    return NextResponse.redirect(`https://${adminDomain}${pathWithQuery}`, 308);
-  }
-
   const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
   const isDev = process.env.NODE_ENV === "development";
   const requestHeaders = new Headers(request.headers);

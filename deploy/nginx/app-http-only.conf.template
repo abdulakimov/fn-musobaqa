@@ -6,7 +6,7 @@ upstream next_upstream {
 server {
   listen 80;
   listen [::]:80;
-  server_name ${DOMAIN} ${ADMIN_DOMAIN};
+  server_name ${DOMAIN};
 
   client_max_body_size 10m;
 

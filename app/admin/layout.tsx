@@ -1,14 +1,6 @@
 import type { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { buildAdminAbsoluteUrl, shouldRedirectToAdminDomain } from "@/lib/admin-domain";
 
-export default async function AdminLayout({ children }: { children: ReactNode }) {
-  const reqHeaders = await headers();
-  if (shouldRedirectToAdminDomain(reqHeaders)) {
-    redirect(buildAdminAbsoluteUrl("/admin"));
-  }
-
+export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-3 border-b border-border bg-card/60 px-6 py-4 backdrop-blur-sm">

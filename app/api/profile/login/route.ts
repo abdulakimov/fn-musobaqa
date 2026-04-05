@@ -64,7 +64,16 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientInitializationError) {
+    const isDbUnavailable =
+      error instanceof Prisma.PrismaClientInitializationError ||
+      (error instanceof Prisma.PrismaClientKnownRequestError &&
+        (error.code === "P1001" || error.code === "P1002")) ||
+      (error instanceof Error &&
+        /ECONNREFUSED|Can't reach database server|Timed out fetching a new connection/i.test(
+          `${error.name} ${error.message}`
+        ));
+
+    if (isDbUnavailable) {
       logApiError("profile-login-db-unavailable", requestId, error);
       return NextResponse.json(
         { error: "Ma'lumotlar bazasiga ulanib bo'lmadi", code: "DB_UNAVAILABLE" },

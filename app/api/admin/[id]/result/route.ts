@@ -3,7 +3,6 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, isValidAdminSession } from "@/lib/admin-auth";
 import { getRequestIdFromHeaders, logApiError } from "@/lib/api-log";
-import { buildAdminAbsoluteUrl, shouldRedirectToAdminDomain } from "@/lib/admin-domain";
 
 const resultSchema = z.object({
   resultStatus: z.string().trim().max(80).nullable().optional(),
@@ -19,11 +18,6 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (shouldRedirectToAdminDomain(req.headers)) {
-    const location = buildAdminAbsoluteUrl(`${req.nextUrl.pathname}${req.nextUrl.search}`);
-    return NextResponse.redirect(location, 308);
-  }
-
   const requestId = getRequestIdFromHeaders(req.headers);
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401, headers: { "x-request-id": requestId } });

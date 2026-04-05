@@ -1,11 +1,10 @@
 ﻿import { redirect } from "next/navigation";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { RegistrationsTable } from "@/components/admin/RegistrationsTable";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { YONALISH_LABELS, YOSH_GURUH_LABELS } from "@/lib/validations";
 import { hasAdminSession } from "@/lib/admin-auth";
-import { buildAdminAbsoluteUrl, shouldRedirectToAdminDomain } from "@/lib/admin-domain";
 
 interface SearchParams {
   holat?: string;
@@ -19,14 +18,6 @@ export default async function AdminPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const reqHeaders = await headers();
-  if (shouldRedirectToAdminDomain(reqHeaders)) {
-    const query = new URLSearchParams(
-      Object.entries(params).filter((entry): entry is [string, string] => typeof entry[1] === "string")
-    ).toString();
-    redirect(buildAdminAbsoluteUrl(`/admin${query ? `?${query}` : ""}`));
-  }
-
   const store = await cookies();
 
   if (!hasAdminSession(store)) {
@@ -166,4 +157,5 @@ export default async function AdminPage({
     </div>
   );
 }
+
 
