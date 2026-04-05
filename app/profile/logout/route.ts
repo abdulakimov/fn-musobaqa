@@ -11,8 +11,9 @@ function sanitizeNextPath(nextPath: string | null) {
 
 function clearSessionAndRedirect(request: Request, nextPath: string | null) {
   const safeNext = sanitizeNextPath(nextPath);
-  const response = NextResponse.redirect(new URL(safeNext, request.url));
+  const response = NextResponse.redirect(new URL(safeNext, request.url), { status: 303 });
   response.cookies.set(PARTICIPANT_SESSION_COOKIE, "", clearedSessionCookieOptions());
+  response.headers.set("Cache-Control", "no-store");
   return response;
 }
 

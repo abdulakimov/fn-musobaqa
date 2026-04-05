@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { normalizePhone } from "@/lib/validations";
 import {
@@ -63,6 +64,14 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+      logApiError("profile-login-db-unavailable", requestId, error);
+      return NextResponse.json(
+        { error: "Ma'lumotlar bazasiga ulanib bo'lmadi", code: "DB_UNAVAILABLE" },
+        { status: 503, headers: { "x-request-id": requestId } }
+      );
+    }
+
     logApiError("profile-login", requestId, error);
     return NextResponse.json({ error: "Server xatosi" }, { status: 500, headers: { "x-request-id": requestId } });
   }
