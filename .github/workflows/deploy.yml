@@ -73,14 +73,7 @@ jobs:
           set -euo pipefail
           [ -n "${VPS_SSH_KEY}" ] || { echo "Missing VPS_SSH_KEY"; exit 1; }
 
-      - name: Validate required deploy secrets
-        if: steps.check_vps_host.outcome != 'success' || steps.check_vps_user.outcome != 'success' || steps.check_vps_ssh_key.outcome != 'success'
-        run: |
-          echo "Required deploy secrets are missing. Check failed steps above."
-          exit 1
-
       - name: Deploy on VPS over SSH
-        if: steps.check_vps_host.outcome == 'success' && steps.check_vps_user.outcome == 'success' && steps.check_vps_ssh_key.outcome == 'success'
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
