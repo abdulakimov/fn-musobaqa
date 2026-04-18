@@ -448,7 +448,6 @@ export default async function AdminPage({
           yonalish,
           utmType,
           smsStatus,
-          contactStatus,
           q: searchQuery || undefined,
           pageSize: String(pageSize),
           dateFrom,
@@ -456,7 +455,6 @@ export default async function AdminPage({
           sortBy,
           sortDir,
           duplicates: duplicatesOnly ? "1" : undefined,
-          kelishStatus,
         }}
         statusCounts={{
           total: totalCount,

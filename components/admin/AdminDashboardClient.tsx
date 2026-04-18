@@ -5,8 +5,6 @@ import { useEffect, useState, useTransition } from "react";
 import {
   RegistrationsTable,
   type AdminRow,
-  type AttendanceStatus,
-  type ContactStatus,
   type Holat,
 } from "@/components/admin/RegistrationsTable";
 import { YONALISH_LABELS, YOSH_GURUH_LABELS } from "@/lib/validations";
@@ -85,8 +83,6 @@ interface AdminDashboardClientProps {
     yonalish?: string;
     utmType?: string;
     smsStatus?: string;
-    contactStatus?: string;
-    kelishStatus?: string;
     q?: string;
     pageSize?: string;
     dateFrom?: string;
@@ -188,71 +184,6 @@ export function AdminDashboardClient({
 
   const patchRow = (id: string, patch: Partial<AdminRow>) => {
     setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
-  };
-
-  const handleContactStatusChanged = ({
-    id,
-    nextContactStatus,
-  }: {
-    id: string;
-    nextContactStatus: ContactStatus;
-  }) => {
-    setRows((prev) =>
-      prev
-        .map((row) => (row.id === id ? { ...row, contactStatus: nextContactStatus } : row))
-        .filter((row) => (queryState.contactStatus ? row.contactStatus === queryState.contactStatus : true))
-    );
-    router.refresh();
-  };
-
-  const handleBulkContactStatusChanged = ({
-    ids,
-    nextContactStatus,
-  }: {
-    ids: string[];
-    nextContactStatus: ContactStatus;
-  }) => {
-    const idSet = new Set(ids);
-    setRows((prev) =>
-      prev
-        .map((row) => (idSet.has(row.id) ? { ...row, contactStatus: nextContactStatus } : row))
-        .filter((row) => (queryState.contactStatus ? row.contactStatus === queryState.contactStatus : true))
-    );
-    router.refresh();
-  };
-
-  const handleAttendanceStatusChanged = ({
-    id,
-    nextAttendanceStatus,
-  }: {
-    id: string;
-    nextAttendanceStatus: AttendanceStatus;
-  }) => {
-    setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, kelishStatus: nextAttendanceStatus } : row))
-    );
-    router.refresh();
-  };
-
-  const handleRowsDeleted = (deletedIds: string[]) => {
-    if (deletedIds.length === 0) return;
-    setRows((prev) => {
-      const deletedSet = new Set(deletedIds);
-      const deletedRows = prev.filter((row) => deletedSet.has(row.id));
-
-      setStats((prevStats) => {
-        const next = { ...prevStats };
-        next.total = Math.max(0, next.total - deletedRows.length);
-        for (const row of deletedRows) {
-          next[row.holat] = Math.max(0, next[row.holat] - 1);
-        }
-        return next;
-      });
-      setVisibleCount((prevCount) => Math.max(0, prevCount - deletedRows.length));
-
-      return prev.filter((row) => !deletedSet.has(row.id));
-    });
-    router.refresh();
   };
 
   const handleManualRegistrationSuccess = ({ id }: { id: string; participantId: string }) => {
@@ -376,11 +307,7 @@ export function AdminDashboardClient({
           totalPages={totalPages}
           queryState={queryState}
           onStatusChanged={handleStatusChanged}
-          onContactStatusChanged={handleContactStatusChanged}
-          onAttendanceStatusChanged={handleAttendanceStatusChanged}
-          onBulkContactStatusChanged={handleBulkContactStatusChanged}
           onRowPatched={patchRow}
-          onRowsDeleted={handleRowsDeleted}
         />
       </div>
       <AdminRegistrationDrawer
