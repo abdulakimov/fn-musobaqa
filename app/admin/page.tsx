@@ -202,7 +202,7 @@ export default async function AdminPage({
         GROUP BY "nameKey"
         HAVING COUNT(*) > 1
       `;
-      duplicateNameKeys = rows.map((row) => row.nameKey);
+      duplicateNameKeys = rows.map((row: { nameKey: string }) => row.nameKey);
     } catch {
       duplicateNameKeys = [];
     }
@@ -280,7 +280,7 @@ export default async function AdminPage({
         WHERE "deletedAt" IS NULL
         GROUP BY "yoshGuruhi"
       `;
-      yoshStats = rows.map((row) => ({
+      yoshStats = rows.map((row: { yoshGuruhi: string; count: number }) => ({
         yoshGuruhi: row.yoshGuruhi,
         _count: { _all: Number(row.count) },
       }));
@@ -295,7 +295,7 @@ export default async function AdminPage({
         WHERE "deletedAt" IS NULL
         GROUP BY "yonalish"
       `;
-      yonalishStats = rows.map((row) => ({
+      yonalishStats = rows.map((row: { yonalish: string; count: number }) => ({
         yonalish: row.yonalish,
         _count: { _all: Number(row.count) },
       }));
@@ -338,7 +338,7 @@ export default async function AdminPage({
           GROUP BY "nameKey"
         `;
         duplicateCountByNameKey = Object.fromEntries(
-          duplicateRows.map((row) => [row.nameKey, Number(row.count)]),
+          duplicateRows.map((row: { nameKey: string; count: number }) => [row.nameKey, Number(row.count)]),
         );
       }
     } catch {
