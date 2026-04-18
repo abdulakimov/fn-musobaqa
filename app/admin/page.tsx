@@ -424,13 +424,7 @@ export default async function AdminPage({
           holat={holat}
           yoshGuruhi={yoshGuruhi}
           yonalish={yonalish}
-          utmType={utmType}
-          smsStatus={smsStatus}
-          contactStatus={contactStatus}
-          kelishStatus={kelishStatus}
           query={searchQuery}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
           yoshOptions={Object.entries(YOSH_GURUH_LABELS) as [string, string][]}
           yonalishOptions={Object.entries(YONALISH_LABELS) as [string, string][]}
         />
