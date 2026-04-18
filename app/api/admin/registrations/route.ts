@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { ZodError } from "zod";
 import { fullRegistrationSchema, YONALISH_LABELS, YOSH_GURUH_LABELS } from "@/lib/validations";
@@ -11,6 +10,24 @@ import {
 } from "@/lib/participant-id";
 import { enqueueRegistrationSms } from "@/lib/sms-queue";
 import { getCompetitionRules } from "@/lib/competition";
+
+type SortDir = "asc" | "desc";
+
+type DateTimeFilter = {
+  gte?: Date;
+  lt?: Date;
+};
+
+type RoyxatWhereInput = {
+  [key: string]: unknown;
+  OR?: RoyxatWhereInput[];
+  AND?: RoyxatWhereInput[];
+  createdAt?: DateTimeFilter;
+  id?: string;
+  nameKey?: { in: string[] };
+};
+
+type RoyxatOrderByWithRelationInput = Record<string, SortDir | { sort: SortDir; nulls: "last" }>;
 
 function isAuthorized(req: NextRequest) {
   return isValidAdminSession(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -41,11 +58,11 @@ function getSearchTokens(value: string) {
     .slice(0, 6);
 }
 
-function buildSearchOr(q: string): Prisma.RoyxatWhereInput[] {
+function buildSearchOr(q: string): RoyxatWhereInput[] {
   const digitsQuery = getDigitsOnly(q);
   const tokens = getSearchTokens(q);
 
-  const directConditions: Prisma.RoyxatWhereInput[] = [
+  const directConditions: RoyxatWhereInput[] = [
     { ism: { contains: q, mode: "insensitive" } },
     { familiya: { contains: q, mode: "insensitive" } },
     { otasiningIsmi: { contains: q, mode: "insensitive" } },
@@ -257,7 +274,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const where: Prisma.RoyxatWhereInput = { deletedAt: null };
+  const where: RoyxatWhereInput = { deletedAt: null };
   if (holat) where.holat = holat;
   if (yoshGuruhi) where.yoshGuruhi = yoshGuruhi;
   if (yonalish) where.yonalish = yonalish;
@@ -265,7 +282,7 @@ export async function GET(req: NextRequest) {
   if (smsStatus) where.smsStatus = smsStatus;
   if (contactStatus) where.aloqaStatus = contactStatus;
   if (dateFrom || dateTo) {
-    const createdAt: Prisma.DateTimeFilter = {};
+    const createdAt: DateTimeFilter = {};
     if (dateFrom) {
       createdAt.gte = tashkentDayStart(dateFrom);
     }
@@ -287,7 +304,7 @@ export async function GET(req: NextRequest) {
         GROUP BY "nameKey"
         HAVING COUNT(*) > 1
       `;
-      duplicateNameKeys = rows.map((row) => row.nameKey);
+      duplicateNameKeys = rows.map((row: { nameKey: string }) => row.nameKey);
     } catch {
       duplicateNameKeys = [];
     }
@@ -298,7 +315,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const orderBy: Prisma.RoyxatOrderByWithRelationInput[] =
+  const orderBy: RoyxatOrderByWithRelationInput[] =
     sortBy === "createdAt"
       ? [{ createdAt: sortDir }]
       : sortBy === "resultScore"
