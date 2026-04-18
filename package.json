@@ -9,6 +9,7 @@
     "lint": "eslint",
     "postinstall": "prisma generate",
     "test:e2e": "playwright test",
+    "test:e2e:critical": "playwright test tests/e2e/admin-auth.spec.ts tests/e2e/admin-attendance-status.spec.ts tests/e2e/home.spec.ts tests/e2e/home-mobile-interactions.spec.ts tests/e2e/register.spec.ts tests/e2e/register-popup.spec.ts tests/e2e/registration-rules.spec.ts",
     "prod:up": "docker compose -f docker-compose.prod.yml up -d",
     "prod:down": "docker compose -f docker-compose.prod.yml down",
     "prod:build": "docker compose -f docker-compose.prod.yml build",
