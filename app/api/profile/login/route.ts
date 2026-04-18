@@ -9,7 +9,7 @@ import {
 import { participantSessionCookieOptions } from "@/lib/session-cookie";
 import { getRequestIdFromHeaders, logApiError } from "@/lib/api-log";
 
-const PARTICIPANT_ID_REGEX = /^(?:T|[ABCD])[1-9]{4}$/;
+const PARTICIPANT_ID_REGEX = /^(?:[ABCDKT])[1-9]{4}$/;
 
 export async function POST(req: NextRequest) {
   const requestId = getRequestIdFromHeaders(req.headers);
@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const participantByPhone = await db.royxat.findUnique({
-      where: { telefon: normalizedPhone },
+    const participantByPhone = await db.royxat.findFirst({
+      where: { telefon: normalizedPhone, deletedAt: null },
       select: { id: true, participantId: true },
     });
 
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     response.cookies.set(
       PARTICIPANT_SESSION_COOKIE,
       createParticipantSessionValue(participantByPhone.id),
-      participantSessionCookieOptions()
+      participantSessionCookieOptions(req)
     );
 
     return response;

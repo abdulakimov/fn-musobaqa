@@ -23,32 +23,79 @@ enum Holat {
   RAD_ETILDI
 }
 
+enum UtmType {
+  MAKTAB
+  BANNER
+  ORGANIK
+}
+
+enum SmsStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum AloqaStatus {
+  BOGLANILMAGAN
+  BOGLANIB_BOLMADI
+  QAYTA_ALOQA
+  BOGLANILGAN
+}
+
+enum KelishStatus {
+  KELGAN
+  KELMADI
+}
+
 model Royxat {
   id              String    @id @default(cuid())
   participantId   String?   @unique @db.VarChar(5)
   ism             String    @db.VarChar(80)
   familiya        String    @db.VarChar(80)
   otasiningIsmi   String    @db.VarChar(80)
-  telefon         String    @unique @db.VarChar(13)
+  nameKey         String    @db.VarChar(260)
+  telefon         String    @db.VarChar(13)
   yonalish        Yonalish
   yoshGuruhi      YoshGruhi
+  utmType         UtmType   @default(ORGANIK)
+  utmSource       String?   @db.VarChar(64)
+  utmMedium       String?   @db.VarChar(64)
+  utmCampaign     String?   @db.VarChar(64)
   resultStatus    String?   @db.VarChar(80)
   resultScore     Int?
   resultNote      String?   @db.VarChar(500)
   resultUpdatedAt DateTime?
+  smsStatus       SmsStatus @default(PENDING)
+  smsSentAt       DateTime?
+  smsError        String?   @db.VarChar(300)
+  smsMessageId    String?   @db.VarChar(20)
+  aloqaStatus     AloqaStatus @default(BOGLANILMAGAN)
+  kelishStatus    KelishStatus @default(KELMADI)
   holat           Holat     @default(KUTILMOQDA)
+  deletedAt       DateTime?
   createdAt       DateTime  @default(now())
 
   @@index([participantId])
   @@index([holat])
   @@index([yoshGuruhi])
+  @@index([yonalish])
+  @@index([yonalish, yoshGuruhi])
   @@index([createdAt])
+  @@index([utmType, createdAt])
+  @@index([utmSource])
+  @@index([smsStatus, createdAt])
+  @@index([aloqaStatus, createdAt])
+  @@index([kelishStatus, createdAt])
+  @@index([nameKey])
+  @@index([telefon])
+  @@index([deletedAt, createdAt])
 }
 
 model IdSequence {
-  key                 String   @id @default("main") @db.VarChar(16)
-  nextMathLetterIndex Int      @default(0)
-  nextMathNumberIndex Int      @default(0)
-  nextTypingNumberIndex Int    @default(0)
-  updatedAt           DateTime @updatedAt
+  key                   String   @id @default("main") @db.VarChar(16)
+  nextTypingLetterIndex Int      @default(0)
+  nextTypingNumberIndex Int      @default(0)
+  nextMathKidsNumberIndex Int    @default(0)
+  nextMathTeensNumberIndex Int   @default(0)
+  updatedAt             DateTime @updatedAt
 }
