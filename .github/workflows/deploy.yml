@@ -36,6 +36,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Critical E2E
+        run: npm run test:e2e:critical
+
   deploy:
     runs-on: ubuntu-latest
     needs: verify
@@ -51,7 +57,7 @@ jobs:
             set -e
             cd ${{ secrets.VPS_APP_DIR }}
             git fetch --all
-            git reset --hard origin/main
+            git reset --hard origin/${{ github.ref_name }}
             docker compose -f docker-compose.prod.yml build --pull migrate app
             docker compose -f docker-compose.prod.yml run --rm migrate
             docker compose -f docker-compose.prod.yml up -d postgres app nginx certbot
