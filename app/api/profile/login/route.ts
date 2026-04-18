@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { normalizePhone } from "@/lib/validations";
 import {
@@ -10,6 +9,12 @@ import { participantSessionCookieOptions } from "@/lib/session-cookie";
 import { getRequestIdFromHeaders, logApiError } from "@/lib/api-log";
 
 const PARTICIPANT_ID_REGEX = /^(?:[ABCDKT])[1-9]{4}$/;
+
+function getErrorCode(error: unknown): string | null {
+  if (typeof error !== "object" || error === null) return null;
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : null;
+}
 
 export async function POST(req: NextRequest) {
   const requestId = getRequestIdFromHeaders(req.headers);
@@ -64,10 +69,10 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error) {
+    const errorCode = getErrorCode(error);
     const isDbUnavailable =
-      error instanceof Prisma.PrismaClientInitializationError ||
-      (error instanceof Prisma.PrismaClientKnownRequestError &&
-        (error.code === "P1001" || error.code === "P1002")) ||
+      errorCode === "P1001" ||
+      errorCode === "P1002" ||
       (error instanceof Error &&
         /ECONNREFUSED|Can't reach database server|Timed out fetching a new connection/i.test(
           `${error.name} ${error.message}`

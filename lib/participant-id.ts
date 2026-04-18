@@ -1,4 +1,4 @@
-import { Prisma, type PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import type { FullRegistrationData } from "@/lib/validations";
 import { getCompetitionRules, getRegistrationDeadlineForDirection } from "@/lib/competition";
 import type { UtmType } from "@/lib/utm";
@@ -27,6 +27,7 @@ type RegistrationCreateOptions = {
   skipDeadlineCheck?: boolean;
   skipLimitCheck?: boolean;
 };
+type TransactionClient = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
 
 export class DuplicatePhoneError extends Error {
   constructor() {
@@ -135,7 +136,7 @@ function buildSequenceUpdate(
 }
 
 async function createWithGeneratedId(
-  tx: Prisma.TransactionClient,
+  tx: TransactionClient,
   data: RegistrationCreateData,
   options: RegistrationCreateOptions = {},
 ) {
@@ -254,14 +255,11 @@ async function createWithGeneratedId(
 }
 
 function isRetryableTransactionError(error: unknown) {
-  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
-    return false;
-  }
-
-  if (error.code === "P2034") return true;
-
-  if (error.code === "P2010") {
-    const meta = JSON.stringify(error.meta ?? {});
+  const code = getPrismaErrorCode(error);
+  if (!code) return false;
+  if (code === "P2034") return true;
+  if (code === "P2010") {
+    const meta = JSON.stringify(getPrismaErrorMeta(error));
     return meta.includes("40001") || meta.includes("TransactionWriteConflict");
   }
 
@@ -269,10 +267,20 @@ function isRetryableTransactionError(error: unknown) {
 }
 
 function isDuplicatePhoneConstraint(error: unknown) {
-  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
-  if (error.code !== "P2002") return false;
-  const meta = JSON.stringify(error.meta ?? {});
+  if (getPrismaErrorCode(error) !== "P2002") return false;
+  const meta = JSON.stringify(getPrismaErrorMeta(error));
   return meta.includes("telefon");
+}
+
+function getPrismaErrorCode(error: unknown): string | null {
+  if (typeof error !== "object" || error === null) return null;
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : null;
+}
+
+function getPrismaErrorMeta(error: unknown): unknown {
+  if (typeof error !== "object" || error === null) return null;
+  return (error as { meta?: unknown }).meta ?? null;
 }
 
 export async function createRegistrationWithId(
@@ -284,7 +292,7 @@ export async function createRegistrationWithId(
     try {
       return await db.$transaction(
         async (tx) => createWithGeneratedId(tx, data, options),
-        { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted }
+        {}
       );
     } catch (error) {
       if (
