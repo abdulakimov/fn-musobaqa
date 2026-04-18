@@ -1,7 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import type { FullRegistrationData } from "@/lib/validations";
 import { getCompetitionRules, getRegistrationDeadlineForDirection } from "@/lib/competition";
-import type { UtmType } from "@/lib/utm";
 import { buildNameKey } from "@/lib/name-key";
 
 const MAIN_SEQUENCE_KEY = "main";
@@ -27,6 +26,7 @@ type RegistrationCreateOptions = {
   skipDeadlineCheck?: boolean;
   skipLimitCheck?: boolean;
 };
+type UtmType = "MAKTAB" | "BANNER" | "ORGANIK";
 type TransactionClient = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
 
 export class DuplicatePhoneError extends Error {
