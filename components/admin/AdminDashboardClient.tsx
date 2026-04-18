@@ -137,7 +137,6 @@ export function AdminDashboardClient({
   const [stats, setStats] = useState(statusCounts);
   const [visibleCount, setVisibleCount] = useState(filteredCount);
   const [registrationDrawerOpen, setRegistrationDrawerOpen] = useState(false);
-  const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
 
   useEffect(() => {
     setRows(initialRows);
@@ -150,12 +149,6 @@ export function AdminDashboardClient({
   useEffect(() => {
     setVisibleCount(filteredCount);
   }, [filteredCount]);
-
-  useEffect(() => {
-    if (!highlightedRowId) return;
-    const timer = window.setTimeout(() => setHighlightedRowId(null), 9000);
-    return () => window.clearTimeout(timer);
-  }, [highlightedRowId]);
 
   const handleStatusChanged = ({
     id,
@@ -186,8 +179,7 @@ export function AdminDashboardClient({
     setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   };
 
-  const handleManualRegistrationSuccess = ({ id }: { id: string; participantId: string }) => {
-    setHighlightedRowId(id);
+  const handleManualRegistrationSuccess = ({ id: _id }: { id: string; participantId: string }) => {
     router.refresh();
   };
 
@@ -301,7 +293,6 @@ export function AdminDashboardClient({
 
         <RegistrationsTable
           rows={rows}
-          highlightedRowId={highlightedRowId}
           currentPage={currentPage}
           pageSize={pageSize}
           totalPages={totalPages}
