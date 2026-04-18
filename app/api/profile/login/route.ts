@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     response.cookies.set(
       PARTICIPANT_SESSION_COOKIE,
       createParticipantSessionValue(participantByPhone.id),
-      participantSessionCookieOptions(req)
+      participantSessionCookieOptions()
     );
 
     return response;
