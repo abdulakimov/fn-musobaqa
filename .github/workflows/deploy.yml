@@ -51,13 +51,11 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
         run: |
           set -euo pipefail
           [ -n "${VPS_HOST}" ] || { echo "Missing VPS_HOST"; exit 1; }
           [ -n "${VPS_USER}" ] || { echo "Missing VPS_USER"; exit 1; }
           [ -n "${VPS_SSH_KEY}" ] || { echo "Missing VPS_SSH_KEY"; exit 1; }
-          [ -n "${VPS_APP_DIR}" ] || { echo "Missing VPS_APP_DIR"; exit 1; }
 
       - name: Deploy on VPS over SSH
         env:
@@ -65,7 +63,7 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-          VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
+          VPS_APP_DIR: ${{ secrets.VPS_APP_DIR || '/opt/fn-musobaqa' }}
           DEPLOY_BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
