@@ -1,10 +1,18 @@
 import { test, expect } from "@playwright/test";
 
-function nextMathLetter(letter: string) {
-  if (letter === "A") return "B";
-  if (letter === "B") return "C";
-  if (letter === "C") return "D";
-  return "A";
+function typingOrdinal(id: string) {
+  const letter = id.charAt(0);
+  const digits = id.slice(1);
+  const letterIndexMap: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+  const letterIndex = letterIndexMap[letter];
+  if (letterIndex === undefined) return -1;
+  const d0 = Number.parseInt(digits.charAt(0), 10) - 1;
+  const d1 = Number.parseInt(digits.charAt(1), 10) - 1;
+  const d2 = Number.parseInt(digits.charAt(2), 10) - 1;
+  const d3 = Number.parseInt(digits.charAt(3), 10) - 1;
+  if ([d0, d1, d2, d3].some((item) => item < 0 || item > 8)) return -1;
+  const numberIndex = (((d0 * 9) + d1) * 9 + d2) * 9 + d3;
+  return numberIndex * 4 + letterIndex;
 }
 
 test("register response contains direction-based participantId and math queue advances", async ({ page }) => {
@@ -73,10 +81,46 @@ test("register response contains direction-based participantId and math queue ad
   const id2 = result.math2.participantId as string;
   const idTyping = result.typing.participantId as string;
 
-  expect(id1).toMatch(/^[ABCD][1-9]{4}$/);
-  expect(id2).toMatch(/^[ABCD][1-9]{4}$/);
-  expect(idTyping).toMatch(/^T[1-9]{4}$/);
-  expect(id2[0]).toBe(nextMathLetter(id1[0]!));
+  expect(id1).toMatch(/^K[1-9]{4}$/);
+  expect(id2).toMatch(/^T[1-9]{4}$/);
+  expect(idTyping).toMatch(/^[ABCD][1-9]{4}$/);
+});
+
+test("typing ids stay on A/B/C/D and advance in sequence", async ({ page }) => {
+  await page.goto("/register");
+
+  const result = await page.evaluate(async () => {
+    const unique = Date.now().toString().slice(-5);
+    const createPayload = (suffix: string) => ({
+      ism: "Ali",
+      familiya: "Karimov",
+      otasiningIsmi: "Vali o'g'li",
+      telefon: `+99895${unique}${suffix}`,
+      yonalish: "TYPING",
+      yoshGuruhi: "YOSH_9_14",
+    });
+
+    const ids: string[] = [];
+    for (const suffix of ["11", "22", "33", "44", "55"]) {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createPayload(suffix)),
+      });
+      const json = await res.json();
+      ids.push(String(json.participantId ?? ""));
+    }
+    return ids;
+  });
+
+  for (const id of result) {
+    expect(id).toMatch(/^[ABCD][1-9]{4}$/);
+  }
+
+  const ordinals = result.map((id) => typingOrdinal(id));
+  for (let i = 1; i < ordinals.length; i += 1) {
+    expect(ordinals[i]).toBeGreaterThan(ordinals[i - 1] ?? -1);
+  }
 });
 
 test("participant can login with phone and participantId", async ({ page }) => {
@@ -112,7 +156,9 @@ test("participant can login with phone and participantId", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/profile$/);
   await expect(page.getByText("Ishtirokchi profili")).toBeVisible();
-  await expect(page.getByText(participantId)).toBeVisible();
+  await expect(page.locator("strong").filter({ hasText: participantId }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Musobaqa bileti" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /biletni yuklab olish/i })).toBeVisible();
 });
 
 test("profile logout redirects to home page", async ({ page }) => {

@@ -5,6 +5,8 @@ import { useEffect, useState, useTransition } from "react";
 import {
   RegistrationsTable,
   type AdminRow,
+  type AttendanceStatus,
+  type ContactStatus,
   type Holat,
 } from "@/components/admin/RegistrationsTable";
 import { YONALISH_LABELS, YOSH_GURUH_LABELS } from "@/lib/validations";
@@ -79,10 +81,12 @@ interface AdminDashboardClientProps {
   totalPages: number;
   queryState: {
     holat?: string;
+    contactStatus?: string;
     yoshGuruhi?: string;
     yonalish?: string;
     utmType?: string;
     smsStatus?: string;
+    kelishStatus?: string;
     q?: string;
     pageSize?: string;
     dateFrom?: string;
@@ -179,7 +183,53 @@ export function AdminDashboardClient({
     setRows((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   };
 
-  const handleManualRegistrationSuccess = ({ id: _id }: { id: string; participantId: string }) => {
+  const handleContactStatusChanged = ({
+    id,
+    nextContactStatus,
+  }: {
+    id: string;
+    prevContactStatus: ContactStatus;
+    nextContactStatus: ContactStatus;
+  }) => {
+    patchRow(id, { contactStatus: nextContactStatus });
+  };
+
+  const handleAttendanceStatusChanged = ({
+    id,
+    nextAttendanceStatus,
+  }: {
+    id: string;
+    prevAttendanceStatus: AttendanceStatus;
+    nextAttendanceStatus: AttendanceStatus;
+  }) => {
+    patchRow(id, { kelishStatus: nextAttendanceStatus });
+  };
+
+  const handleBulkContactStatusChanged = ({
+    ids,
+    nextContactStatus,
+  }: {
+    ids: string[];
+    nextContactStatus: ContactStatus;
+  }) => {
+    const idSet = new Set(ids);
+    setRows((prev) =>
+      prev.map((row) => (idSet.has(row.id) ? { ...row, contactStatus: nextContactStatus } : row)),
+    );
+  };
+
+  const handleRowsDeleted = (deletedIds: string[]) => {
+    const deletedSet = new Set(deletedIds);
+    setRows((prev) => prev.filter((row) => !deletedSet.has(row.id)));
+    setVisibleCount((prev) => Math.max(0, prev - deletedIds.length));
+    setStats((prev) => ({
+      ...prev,
+      total: Math.max(0, prev.total - deletedIds.length),
+    }));
+    router.refresh();
+  };
+
+  const handleManualRegistrationSuccess = () => {
     router.refresh();
   };
 
@@ -298,7 +348,11 @@ export function AdminDashboardClient({
           totalPages={totalPages}
           queryState={queryState}
           onStatusChanged={handleStatusChanged}
+          onContactStatusChanged={handleContactStatusChanged}
+          onAttendanceStatusChanged={handleAttendanceStatusChanged}
+          onBulkContactStatusChanged={handleBulkContactStatusChanged}
           onRowPatched={patchRow}
+          onRowsDeleted={handleRowsDeleted}
         />
       </div>
       <AdminRegistrationDrawer

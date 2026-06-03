@@ -33,7 +33,13 @@ export function RegistrationForm({ content }: RegistrationFormProps) {
 
       <div className="ui-surface p-6 sm:p-10">
         {step === 0 && <Step1Personal defaultValues={data} onNext={next} content={content} />}
-        {step === 1 && <Step4Confirm data={data as FullRegistrationData} onBack={back} content={content} />}
+        {step === 1 && (
+          <Step4Confirm
+            data={data as FullRegistrationData}
+            onBack={back}
+            content={content}
+          />
+        )}
       </div>
     </div>
   );

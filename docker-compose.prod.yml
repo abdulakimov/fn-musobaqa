@@ -22,10 +22,15 @@ services:
       - .env.production
     environment:
       NODE_ENV: production
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      REGISTER_QUEUE_ENABLED: ${REGISTER_QUEUE_ENABLED:-1}
+      LIMIT_MATH_12_14: ${LIMIT_MATH_12_14:-450}
     ports:
       - "127.0.0.1:3002:3000"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/healthz || exit 1"]
@@ -53,6 +58,44 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: fn-musobaqa-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_net
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: fn-musobaqa-worker
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      REGISTER_QUEUE_ENABLED: ${REGISTER_QUEUE_ENABLED:-1}
+      REGISTER_QUEUE_CONCURRENCY: ${REGISTER_QUEUE_CONCURRENCY:-30}
+      LIMIT_MATH_12_14: ${LIMIT_MATH_12_14:-450}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - app_net
 
@@ -97,6 +140,7 @@ services:
 
 volumes:
   pgdata:
+  redisdata:
   certbot-etc:
   certbot-var:
   certbot-web:

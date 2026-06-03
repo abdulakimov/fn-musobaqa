@@ -5,9 +5,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./
 RUN npm ci
 
 FROM base AS builder
+ENV DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build?schema=public
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
@@ -17,6 +20,11 @@ FROM deps AS migrator
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 CMD ["npx", "prisma", "migrate", "deploy"]
+
+FROM deps AS worker
+COPY . .
+RUN npx prisma generate
+CMD ["npx", "tsx", "scripts/register-worker.ts"]
 
 FROM node:22-alpine AS runner
 WORKDIR /app

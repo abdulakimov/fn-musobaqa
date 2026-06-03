@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/sections/Navbar";
 import { HeroSection } from "@/components/sections/HeroSection";
+import { PrizesSection } from "@/components/sections/PrizesSection";
 import { AboutSection } from "@/components/sections/AboutSection";
 import { NominationsSection } from "@/components/sections/NominationsSection";
 import { TimelineSection } from "@/components/sections/TimelineSection";
@@ -30,6 +31,9 @@ export default function HomePage() {
         <SectionMotion preset="fadeIn">
           <HeroSection data={STATIC_HERO} content={STATIC_SITE_CONTENT} />
         </SectionMotion>
+        <SectionMotion preset="fadeUp" delay={0.03}>
+          <PrizesSection />
+        </SectionMotion>
         <SectionMotion preset="fadeUp" delay={0.04}>
           <AboutSection data={STATIC_ABOUT} />
         </SectionMotion>
@@ -42,11 +46,11 @@ export default function HomePage() {
         <SectionMotion preset="fadeUp" delay={0.1}>
           <RequirementsSection data={STATIC_REQUIREMENTS} />
         </SectionMotion>
-        <SectionMotion preset="scaleIn" delay={0.12}>
-          <RegistrationCtaSection data={STATIC_CTA} />
-        </SectionMotion>
-        <SectionMotion preset="fadeUp" delay={0.14}>
+        <SectionMotion preset="fadeUp" delay={0.12}>
           <FaqSection items={STATIC_FAQ_ITEMS} meta={STATIC_FAQ_META} />
+        </SectionMotion>
+        <SectionMotion preset="scaleIn" delay={0.14}>
+          <RegistrationCtaSection data={STATIC_CTA} />
         </SectionMotion>
       </main>
       <FooterSection settings={STATIC_SITE_SETTINGS} content={STATIC_SITE_CONTENT} />

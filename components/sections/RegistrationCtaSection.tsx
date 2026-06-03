@@ -29,11 +29,11 @@ export function RegistrationCtaSection({ data }: RegistrationCtaSectionProps) {
         <div>
           <Link
             href="/register"
-            className="group relative inline-flex h-14 min-w-[280px] items-center justify-center gap-2 whitespace-nowrap overflow-hidden rounded-xl border border-white/40 bg-[linear-gradient(135deg,#F96933_0%,#FCA41C_100%)] px-10 text-lg font-bold text-white shadow-[0_10px_24px_rgba(249,105,51,0.2)] transition-[box-shadow,border-color] duration-300 hover:border-white/55 hover:shadow-[0_14px_30px_rgba(249,105,51,0.26)]"
+            className="group relative inline-flex h-16 min-w-[340px] items-center justify-center gap-2 whitespace-nowrap overflow-hidden rounded-xl border border-white/40 bg-[linear-gradient(135deg,#F96933_0%,#FCA41C_100%)] px-10 text-xl font-bold text-white shadow-[0_10px_24px_rgba(249,105,51,0.2)] transition-[box-shadow,border-color] duration-300 hover:border-white/55 hover:shadow-[0_14px_30px_rgba(249,105,51,0.26)]"
           >
             <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.2)_0%,rgba(255,255,255,0.06)_36%,rgba(255,255,255,0)_68%)]" />
             {data?.ctaText ?? "Ro'yxatdan o'tish"}
-            <ArrowRightIcon className="arrow-hover-nudge h-5 w-5" />
+            <ArrowRightIcon className="arrow-hover-nudge h-6 w-6" />
           </Link>
         </div>
 

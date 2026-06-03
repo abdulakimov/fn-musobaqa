@@ -1,5 +1,16 @@
 # Production Deployment (VPS)
 
+## 0) CI/CD source of truth
+- GitHub Actions deploy `.env.local`ni o'qimaydi.
+- Localdagi `VPS_IP_ADRESS` yoki `VPS_PASSWORD` qiymatlari deploy pipelinega ta'sir qilmaydi.
+- Deploy faqat GitHub repository secrets orqali ishlaydi:
+  - Required: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`
+  - Optional: `VPS_PORT` (default `22`), `VPS_APP_DIR` (default `/opt/fn-musobaqa`)
+
+`VPS_IP_ADRESS=ssh root@157.173.114.153` format bo'lsa, mapping shunday qilinadi:
+- `VPS_USER=root`
+- `VPS_HOST=157.173.114.153`
+
 ## 1) Server prerequisites
 - Ubuntu 22.04+ VPS
 - Docker + Docker Compose plugin
@@ -26,6 +37,31 @@ docker compose -f docker-compose.prod.yml build --pull migrate app
 docker compose -f docker-compose.prod.yml run --rm migrate
 NGINX_TEMPLATE=app-tls.conf.template docker compose -f docker-compose.prod.yml up -d postgres app nginx certbot
 ```
+
+## 4.1) GitHub Actions deploy (SSH key-only)
+1. Localda deploy uchun SSH key yarating (agar yo'q bo'lsa):
+```bash
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/fn-musobaqa_deploy
+```
+2. Public keyni VPSga qo'shing:
+```bash
+ssh root@157.173.114.153 "mkdir -p ~/.ssh && chmod 700 ~/.ssh"
+cat ~/.ssh/fn-musobaqa_deploy.pub | ssh root@157.173.114.153 "cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+```
+3. GitHub repository -> Settings -> Secrets and variables -> Actions:
+   - `VPS_HOST=157.173.114.153`
+   - `VPS_USER=root`
+   - `VPS_SSH_KEY=<~/.ssh/fn-musobaqa_deploy private key contents>`
+   - optional `VPS_PORT`, `VPS_APP_DIR`
+4. SSH preflight tekshiruvi:
+```bash
+ssh -i ~/.ssh/fn-musobaqa_deploy -o BatchMode=yes root@157.173.114.153 "echo SSH ok"
+```
+5. `main`/`master` ga push qiling yoki Actions'dan `Build and Deploy` workflow'ni `workflow_dispatch` bilan ishga tushiring.
+
+Eslatma:
+- `VPS_PASSWORD` deployda ishlatilmaydi.
+- Password authni deploy workflowga qo'shish tavsiya etilmaydi.
 
 ## 5) Health checks
 - Liveness: `GET /api/healthz`

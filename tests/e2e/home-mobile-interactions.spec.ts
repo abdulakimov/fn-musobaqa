@@ -30,9 +30,9 @@ test.describe("home mobile interactions", () => {
   test("faq accordion opens on mobile tap", async ({ page }) => {
     await page.locator("#faq").scrollIntoViewIfNeeded();
 
-    const trigger = page.getByRole("button", { name: "Musobaqa pullikmi?", exact: true });
+    const trigger = page.getByRole("button", { name: "Natijalar qanday e'lon qilinadi?", exact: true });
     await trigger.click();
-    await expect(page.getByText("mutlaqo bepul")).toBeVisible();
+    await expect(page.getByText("Telegram kanalida")).toBeVisible();
   });
 
   test("hero cta and scroll indicator are clickable", async ({ page }) => {

@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import {
   Accordion,
   AccordionContent,
@@ -13,59 +14,38 @@ import type { FaqItem, SectionMeta } from "@/lib/site-content";
 
 const DEFAULT_FAQS: FaqItem[] = [
   {
-    _id: "1",
-    question: "Qaysi yo'nalishni tanlash mumkin?",
-    answer:
-      "Ro'yxatdan o'tishda Matematika yoki Typing yo'nalishidan birini tanlaysiz. Har bir yo'nalish bo'yicha alohida baholash olib boriladi.",
+    _id: "5",
+    question: "Natijalar qanday e'lon qilinadi?",
+    answer: "Natijalar profilda emas, rasmiy",
+    linkText: "Telegram kanalida",
+    linkHref: "https://t.me/robbituz",
+    answerSuffix: "e'lon qilinadi.",
     order: 1,
   },
   {
-    _id: "2",
-    question: "Musobaqa pullikmi?",
-    answer: "Yo'q, musobaqada qatnashish va ro'yxatdan o'tish mutlaqo bepul.",
-    order: 2,
-  },
-  {
-    _id: "3",
-    question: "Yosh chegarasi qanday?",
-    answer:
-      "Matematika yo'nalishi uchun 9-11 va 12-14 yosh toifalari qabul qilinadi. Typing yo'nalishi uchun esa umumiy 9-14 yosh toifasi qabul qilinadi.",
-    order: 3,
-  },
-  {
-    _id: "4",
-    question: "Natijalar qanday e'lon qilinadi?",
-    answer:
-      "Natijalar 19-aprel kuni e'lon qilinadi va rasmiy kanallar orqali ham yuboriladi.",
-    order: 4,
-  },
-  {
-    _id: "5",
+    _id: "6",
     question: "Robbit akademiyasi qanday markaz?",
     answer:
       "Robbit akademiyasi 6-15 yosh o'quvchilar uchun robototexnika va IT yo'nalishlarida amaliy darslar beradigan zamonaviy o'quv markazi.",
-    order: 5,
-  },
-  {
-    _id: "6",
-    question: "Typing yo'nalishida nimalar baholanadi?",
-    answer:
-      "Asosiy mezonlar: tezlik (WPM), aniqlik va xatolar soni.",
-    order: 6,
+    order: 2,
   },
   {
     _id: "7",
-    question: "Matematika yo'nalishida kalkulyator ruxsat etiladimi?",
-    answer:
-      "Yo'q, masalalar kalkulyatorsiz yechish formatida bo'ladi.",
-    order: 7,
+    question: "Musobaqa nizomini qayerdan olaman?",
+    answer: "Musobaqa nizomini",
+    linkText: "shaxsiy kabinetingizdan",
+    linkHref: "/profile/login",
+    answerSuffix: "olishingiz mumkin.",
+    order: 3,
   },
   {
     _id: "8",
-    question: "Sovrinlar qanday?",
-    answer:
-      "1-3 o'rinlar uchun sovrinlar beriladi, barcha ishtirokchilarga sertifikat topshiriladi.",
-    order: 8,
+    question: "Natijalar profilda ko'rinadimi?",
+    answer: "Yo'q, barcha yakuniy natijalar rasmiy",
+    linkText: "Telegram kanalida",
+    linkHref: "https://t.me/robbituz",
+    answerSuffix: "e'lon qilinadi.",
+    order: 4,
   },
 ];
 
@@ -98,7 +78,28 @@ export function FaqSection({ items, meta }: FaqSectionProps) {
                     {faq.question}
                   </AccordionTrigger>
                   <AccordionContent className="border-t border-border/70 pb-5 pt-4 text-[1.02rem] leading-8 text-muted-foreground">
-                    {faq.answer}
+                    {faq.linkHref && faq.linkText ? (
+                      <span>
+                        {faq.answer}{" "}
+                        {faq.linkHref.startsWith("http") ? (
+                          <a
+                            href={faq.linkHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-medium text-electric-blue underline underline-offset-2 hover:text-[#2F73EA]"
+                          >
+                            {faq.linkText}
+                          </a>
+                        ) : (
+                          <Link href={faq.linkHref} className="font-medium text-electric-blue underline underline-offset-2 hover:text-[#2F73EA]">
+                            {faq.linkText}
+                          </Link>
+                        )}{" "}
+                        {faq.answerSuffix ?? ""}
+                      </span>
+                    ) : (
+                      faq.answer
+                    )}
                   </AccordionContent>
                 </AccordionItem>
               </MotionCard>
@@ -109,4 +110,3 @@ export function FaqSection({ items, meta }: FaqSectionProps) {
     </SectionWrapper>
   );
 }
-

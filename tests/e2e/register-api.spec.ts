@@ -5,7 +5,7 @@ test("register api mocked happy path", async ({ page }) => {
     await route.fulfill({
       status: 201,
       contentType: "application/json",
-      body: JSON.stringify({ success: true, id: "mock-id-1", participantId: "A1111" }),
+      body: JSON.stringify({ success: true, id: "mock-id-1", participantId: "K1111" }),
     });
   });
 
@@ -29,7 +29,7 @@ test("register api mocked happy path", async ({ page }) => {
 
   expect(result.status).toBe(201);
   expect(result.json.success).toBeTruthy();
-  expect(result.json.participantId).toBe("A1111");
+  expect(result.json.participantId).toBe("K1111");
 });
 
 test("register api rejects legacy payload keys", async ({ page }) => {

@@ -41,6 +41,14 @@ export async function PATCH(
   const { id } = await params;
 
   try {
+    const existing = await db.royxat.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Ishtirokchi topilmadi" }, { status: 404, headers: { "x-request-id": requestId } });
+    }
+
     const updated = await db.royxat.update({
       where: { id },
       data: {

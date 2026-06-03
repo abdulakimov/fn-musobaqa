@@ -5,6 +5,9 @@
   email?: string;
   website?: string;
   address?: string;
+  mapUrl?: string;
+  nizomPdfUrl?: string;
+  nizomText?: string[];
   telegram?: string;
   instagram?: string;
   youtube?: string;
@@ -221,6 +224,9 @@ export interface FaqItem {
   _id: string;
   question: string;
   answer: string;
+  linkText?: string;
+  linkHref?: string;
+  answerSuffix?: string;
   order: number;
 }
 
@@ -238,7 +244,15 @@ export const STATIC_SITE_SETTINGS: SiteSettings = {
   phone: "78-777-3-777",
   email: "info@robbit.uz",
   website: "robbit.uz",
-  address: "Farg'ona viloyati, Farg'ona shahri",
+  address: "Farg'ona viloyati, Fag'ona shahri, Najot Ta'lim binosi",
+  mapUrl: "https://yandex.uz/maps/-/CPfhBImd",
+  nizomPdfUrl: "https://docs.google.com/document/d/1yIMOnm1Y3o14v7Je_bjYNmNz93rdKAf-4DjCBclMr7k/edit?usp=sharing",
+  nizomText: [
+    "Barcha arizalar belgilangan tartibda tekshiriladi va tasdiqlanadi.",
+    "Musobaqada ishtirok etish uchun ro'yxatdan o'tish talablarini to'liq bajarish zarur.",
+    "Ishtirokchi belgilangan sana va vaqtda kelishi shart. Kechikkan ishtirokchi ro'yxatga qayta qo'shilmaydi.",
+    "Natijalar rasmiy Telegram kanalida e'lon qilinadi.",
+  ],
   telegram: "https://t.me/robbituz",
   instagram: "https://www.instagram.com/robbituz/",
   youtube: "https://www.youtube.com/@Robbituz",
@@ -354,7 +368,7 @@ export const STATIC_HERO: HeroContent = {
   subtitle:
     "Robbit akademiyasi tomonidan yoshlarning analitik fikrlashi va klaviatura tezligini sinovdan o'tkazadigan yirik mintaqaviy musobaqa",
   competitionDate: "2026-04-18T09:00:00+05:00",
-  registrationDeadline: "2026-04-17T23:59:59+05:00",
+  registrationDeadline: "2026-04-16T23:59:59+05:00",
   ctaText: "Ro'yxatdan o'tish",
   ctaSecondaryText: "Batafsil ma'lumot",
   locationText: "Farg'ona viloyati",
@@ -392,7 +406,8 @@ export const STATIC_NOMINATIONS: NominationsSectionContent = {
       title: "Matematika",
       iconKey: "math",
       badge: "Asosiy yo'nalish",
-      description: "9-11 va 12-14 yosh guruhlari uchun mantiqiy hamda arifmetik masalalar bo'yicha bellashuv.",
+      description:
+        "9-11 va 12-14 yosh guruhlari uchun mantiqiy hamda arifmetik masalalar bo'yicha bellashuv.",
       tasks: ["Arifmetik tezkor test", "Mantiqiy masalalar", "Analitik yechim va aniqlik"],
       colorAccent: "blue",
     },
@@ -401,7 +416,8 @@ export const STATIC_NOMINATIONS: NominationsSectionContent = {
       title: "Typing",
       iconKey: "typing",
       badge: "Tezlik",
-      description: "Typing yo'nalishi 9-14 yosh toifasi bo'yicha tezlik va aniqlik mezonida baholanadi.",
+      description:
+        "Typing yo'nalishi 9-14 yosh toifasi bo'yicha tezlik va aniqlik mezonida baholanadi.",
       tasks: ["Tezlik sinovi", "Xatolar ko'rsatkichi", "Final natija reytingi"],
       colorAccent: "blue",
     },
@@ -417,15 +433,13 @@ export const STATIC_REQUIREMENTS: RequirementsSectionContent = {
   optionalPrefix: "Majburiy emas",
   requirements: [
     { text: "9-14 yosh toifasiga tushish", required: true },
-    { text: "Farg'ona viloyatidan bo'lish", required: true },
     { text: "Typing va matematikaga qiziqish bo'lishi", required: true },
-    { text: "Tug'ilganlik haqida hujjat nusxasi", required: true },
     { text: "Ro'yxatdan o'tish formasini to'liq to'ldirish", required: true },
     { text: "Musobaqa kuni belgilangan vaqtda kelish", required: true },
     { text: "2 ta yo'nalishdan faqat 1 tasini tanlash", required: true },
   ],
   benefits: [
-    { iconKey: "certificate", text: "Akademiya uchun sertifikat va imtiyozlar" },
+    { iconKey: "certificate", text: "Akademiya uchun imtiyozlar" },
     { iconKey: "award", text: "Barcha ishtirokchilarga sertifikat" },
     { iconKey: "gift", text: "Faol ishtirokchilar uchun sovg'alar" },
     { iconKey: "camera", text: "Rasmiy foto va video yorituv" },
@@ -439,7 +453,7 @@ export const STATIC_CTA: CtaSectionContent = {
   title: "Hoziroq Ro'yxatdan O'ting!",
   subtitle: "18-19-aprel 2026-yil, Farg'ona viloyatida o'tkaziladi.",
   deadlinePrefixText: "Ro'yxatdan o'tish muddati:",
-  deadline: "2026-yil 7-apreldan 17-aprelgacha",
+  deadline: "2026-yil 7-apreldan 16-aprel 23:59 gacha",
   deadlineSuffixText: "davom etadi.",
   ctaText: "Ro'yxatdan o'tish",
   note: "Bepul ishtirok • Onlayn ariza • Taxminan 3 daqiqa",
@@ -453,37 +467,38 @@ export const STATIC_FAQ_META: SectionMeta = {
 
 export const STATIC_FAQ_ITEMS: FaqItem[] = [
   {
-    _id: "faqItem-1",
-    question: "Qaysi yo'nalishni tanlash mumkin?",
-    answer:
-      "Ro'yxatdan o'tishda Matematika yoki Typing yo'nalishidan birini tanlaysiz. Har bir yo'nalish bo'yicha alohida baholash olib boriladi.",
+    _id: "faqItem-5",
+    question: "Natijalar qanday e'lon qilinadi?",
+    answer: "Natijalar profilda emas, rasmiy",
+    linkText: "Telegram kanalida",
+    linkHref: "https://t.me/robbituz",
+    answerSuffix: "e'lon qilinadi.",
     order: 1,
   },
   {
-    _id: "faqItem-2",
-    question: "Musobaqa pullikmi?",
-    answer: "Yo'q, musobaqada qatnashish va ro'yxatdan o'tish mutlaqo bepul.",
-    order: 2,
-  },
-  {
-    _id: "faqItem-3",
-    question: "Yosh chegarasi qanday?",
-    answer:
-      "Matematika yo'nalishi uchun 9-11 va 12-14 yosh toifalari qabul qilinadi. Typing yo'nalishi uchun esa umumiy 9-14 yosh toifasi qabul qilinadi.",
-    order: 3,
-  },
-  {
-    _id: "faqItem-4",
-    question: "Natijalar qanday e'lon qilinadi?",
-    answer: "Natijalar 19-aprel kuni e'lon qilinadi va rasmiy kanallar orqali ham yuboriladi.",
-    order: 4,
-  },
-  {
-    _id: "faqItem-5",
+    _id: "faqItem-6",
     question: "Robbit akademiyasi qanday markaz?",
     answer:
       "Robbit akademiyasi 6-15 yosh o'quvchilar uchun robototexnika va IT yo'nalishlarida amaliy darslar beradigan zamonaviy o'quv markazi.",
-    order: 5,
+    order: 2,
+  },
+  {
+    _id: "faqItem-7",
+    question: "Musobaqa nizomini qayerdan olaman?",
+    answer: "Musobaqa nizomini",
+    linkText: "shaxsiy kabinetingizdan",
+    linkHref: "/profile/login",
+    answerSuffix: "olishingiz mumkin.",
+    order: 3,
+  },
+  {
+    _id: "faqItem-8",
+    question: "Natijalar profilda ko'rinadimi?",
+    answer: "Yo'q, barcha yakuniy natijalar rasmiy",
+    linkText: "Telegram kanalida",
+    linkHref: "https://t.me/robbituz",
+    answerSuffix: "e'lon qilinadi.",
+    order: 4,
   },
 ];
 
@@ -505,13 +520,13 @@ export const STATIC_TIMELINE_EVENTS: TimelineEvent[] = [
   {
     _id: "timelineEvent-2",
     title: "Ro'yxatdan o'tish yakunlanadi",
-    date: "2026-04-17",
+    date: "2026-04-16",
     description: "Arizalarni qabul qilishning so'nggi kuni.",
     status: "upcoming",
     order: 2,
   },
   {
-    _id: "timelineEvent-3",
+    _id: "timelineEvent-4",
     title: "Matematika musobaqasi",
     date: "2026-04-18",
     description: "Matematika yo'nalishi bo'yicha 9-11 va 12-14 yosh guruhlari bellashuvi o'tkaziladi.",
@@ -519,7 +534,7 @@ export const STATIC_TIMELINE_EVENTS: TimelineEvent[] = [
     order: 3,
   },
   {
-    _id: "timelineEvent-4",
+    _id: "timelineEvent-5",
     title: "Typing musobaqasi",
     date: "2026-04-19",
     description: "Typing yo'nalishi bo'yicha 9-14 yosh toifasi bellashuvi o'tkaziladi.",
@@ -527,7 +542,7 @@ export const STATIC_TIMELINE_EVENTS: TimelineEvent[] = [
     order: 4,
   },
   {
-    _id: "timelineEvent-5",
+    _id: "timelineEvent-6",
     title: "Natijalar e'loni",
     date: "2026-04-19",
     description: "Yakuniy natijalar e'lon qilinadi.",
@@ -535,5 +550,7 @@ export const STATIC_TIMELINE_EVENTS: TimelineEvent[] = [
     order: 5,
   },
 ];
+
+
 
 

@@ -1,7 +1,8 @@
 ﻿import { z } from "zod";
 import { tryNormalizeUzPhone } from "@/lib/phone";
 
-const NAME_REGEX = /^[\p{L}'`\u2019\u02BB\-\s]+$/u;
+// Accept common apostrophe-like chars used across Uzbek keyboards/IMEs.
+const NAME_REGEX = /^[\p{L}'`\u00B4\u2018\u2019\u02BB\u02BC\u2032\u02B9\-\s]+$/u;
 
 export function normalizePhone(input: string) {
   const normalized = tryNormalizeUzPhone(input);

@@ -9,7 +9,7 @@ function sanitizeNextPath(nextPath: string | null) {
   return nextPath;
 }
 
-function clearSessionAndRedirect(nextPath: string | null) {
+function clearSessionAndRedirect(nextPath: string | null, request?: Request) {
   const safeNext = sanitizeNextPath(nextPath);
   const response = new NextResponse(null, {
     status: 303,
@@ -18,13 +18,13 @@ function clearSessionAndRedirect(nextPath: string | null) {
       "Cache-Control": "no-store",
     },
   });
-  response.cookies.set(PARTICIPANT_SESSION_COOKIE, "", clearedSessionCookieOptions());
+  response.cookies.set(PARTICIPANT_SESSION_COOKIE, "", clearedSessionCookieOptions(request));
   return response;
 }
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  return clearSessionAndRedirect(url.searchParams.get("next"));
+  return clearSessionAndRedirect(url.searchParams.get("next"), request);
 }
 
 export async function POST() {

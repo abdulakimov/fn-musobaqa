@@ -58,21 +58,21 @@ export function HeroSection({ data, content }: HeroSectionProps) {
           <CountdownTimer targetDate={data?.registrationDeadline ?? data?.competitionDate ?? COMPETITION_DATE} />
         </div>
 
-        <div className="mb-3 flex flex-col items-center justify-center gap-4 sm:mb-0 sm:flex-row">
+        <div className="mb-3 flex flex-col items-center justify-center gap-3 sm:mb-0 sm:flex-row sm:gap-4">
           <Link
             href="/register"
-            className="group relative inline-flex h-14 w-[260px] items-center justify-center gap-2 overflow-hidden rounded-xl border border-white/40 bg-[linear-gradient(135deg,#F96933_0%,#FCA41C_100%)] px-10 text-lg font-bold text-white shadow-[0_10px_24px_rgba(249,105,51,0.2)] transition-[box-shadow,border-color] duration-300 hover:border-white/55 hover:shadow-[0_14px_30px_rgba(249,105,51,0.26)]"
+            className="group relative inline-flex h-[52px] min-w-[250px] items-center justify-center gap-2 overflow-hidden rounded-xl border border-white/40 bg-[linear-gradient(135deg,#F96933_0%,#FCA41C_100%)] px-7 text-lg font-bold text-white shadow-[0_10px_24px_rgba(249,105,51,0.2)] transition-[box-shadow,border-color] duration-300 hover:border-white/55 hover:shadow-[0_14px_30px_rgba(249,105,51,0.26)] sm:h-12 sm:min-w-[240px] sm:px-6 sm:text-base"
           >
             <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.2)_0%,rgba(255,255,255,0.06)_36%,rgba(255,255,255,0)_68%)]" />
             {data?.ctaText ?? "Ro'yxatdan o'tish"}
-            <ArrowRightIcon className="arrow-hover-nudge h-4 w-4" />
+            <ArrowRightIcon className="arrow-hover-nudge h-[18px] w-[18px] sm:h-4 sm:w-4" />
           </Link>
           <a
             href="#about"
             className={buttonVariants({
               size: "lg",
               variant: "outline",
-              className: "h-14 w-[260px] rounded-xl border-border bg-transparent px-10 text-lg font-bold hover:border-border hover:bg-transparent sm:mt-0",
+              className: "h-[52px] min-w-[250px] rounded-xl border-border bg-transparent px-7 text-lg font-bold hover:border-border hover:bg-transparent sm:mt-0 sm:h-12 sm:min-w-[240px] sm:px-6 sm:text-base",
             })}
           >
             {data?.ctaSecondaryText ?? "Batafsil ma'lumot"}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getValidUtmFromQuery, serializeUtmCookie, UTM_COOKIE_NAME } from "@/lib/utm";
 
 export function proxy(request: NextRequest) {
   const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
@@ -12,6 +13,16 @@ export function proxy(request: NextRequest) {
       headers: requestHeaders,
     },
   });
+  const validUtm = getValidUtmFromQuery(request.nextUrl.searchParams);
+  if (validUtm) {
+    response.cookies.set(UTM_COOKIE_NAME, serializeUtmCookie(validUtm), {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: !isDev,
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+    });
+  }
 
   response.headers.set("x-request-id", requestId);
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -31,11 +42,11 @@ export function proxy(request: NextRequest) {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+      `script-src 'self' 'unsafe-inline' https://connect.facebook.net${isDev ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self' data: https:",
-      "connect-src 'self'",
+      "connect-src 'self' https://www.facebook.com https://connect.facebook.net",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

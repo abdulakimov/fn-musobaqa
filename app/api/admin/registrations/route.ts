@@ -10,24 +10,12 @@ import {
 } from "@/lib/participant-id";
 import { enqueueRegistrationSms } from "@/lib/sms-queue";
 import { getCompetitionRules } from "@/lib/competition";
-
-type SortDir = "asc" | "desc";
-
-type DateTimeFilter = {
-  gte?: Date;
-  lt?: Date;
-};
-
-type RoyxatWhereInput = {
-  [key: string]: unknown;
-  OR?: RoyxatWhereInput[];
-  AND?: RoyxatWhereInput[];
-  createdAt?: DateTimeFilter;
-  id?: string;
-  nameKey?: { in: string[] };
-};
-
-type RoyxatOrderByWithRelationInput = Record<string, SortDir | { sort: SortDir; nulls: "last" }>;
+import {
+  CONTACT_STATUS_VALUES,
+  buildAdminRegistrationsOrderBy,
+  buildAdminRegistrationsWhere,
+  parseAdminRegistrationsFilters,
+} from "@/lib/admin-registration-filters";
 
 function isAuthorized(req: NextRequest) {
   return isValidAdminSession(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -45,79 +33,7 @@ function parseEnum<T extends readonly string[]>(raw: string | null, values: T): 
   return (values as readonly string[]).includes(raw) ? (raw as T[number]) : null;
 }
 
-function getDigitsOnly(value: string) {
-  return value.replace(/\D/g, "");
-}
-
-function getSearchTokens(value: string) {
-  return value
-    .toLowerCase()
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0)
-    .slice(0, 6);
-}
-
-function buildSearchOr(q: string): RoyxatWhereInput[] {
-  const digitsQuery = getDigitsOnly(q);
-  const tokens = getSearchTokens(q);
-
-  const directConditions: RoyxatWhereInput[] = [
-    { ism: { contains: q, mode: "insensitive" } },
-    { familiya: { contains: q, mode: "insensitive" } },
-    { otasiningIsmi: { contains: q, mode: "insensitive" } },
-    { participantId: { contains: q, mode: "insensitive" } },
-    { telefon: { contains: q } },
-  ];
-
-  if (digitsQuery && digitsQuery !== q) {
-    directConditions.push({ telefon: { contains: digitsQuery } });
-  }
-
-  if (tokens.length <= 1) {
-    return directConditions;
-  }
-
-  return [
-    ...directConditions,
-    {
-      AND: tokens.map((token) => ({
-        OR: [
-          { ism: { contains: token, mode: "insensitive" } },
-          { familiya: { contains: token, mode: "insensitive" } },
-          { otasiningIsmi: { contains: token, mode: "insensitive" } },
-          { participantId: { contains: token, mode: "insensitive" } },
-        ],
-      })),
-    },
-  ];
-}
-
-const HOLAT_VALUES = ["KUTILMOQDA", "TASDIQLANDI", "RAD_ETILDI"] as const;
-const YOSH_VALUES = ["YOSH_9_11", "YOSH_12_14", "YOSH_9_14"] as const;
-const YONALISH_VALUES = ["MATEMATIKA", "TYPING"] as const;
-const UTM_TYPE_VALUES = ["MAKTAB", "BANNER", "ORGANIK"] as const;
-const SMS_STATUS_VALUES = ["PENDING", "SENT", "FAILED"] as const;
-const CONTACT_STATUS_VALUES = ["BOGLANILMAGAN", "BOGLANIB_BOLMADI", "QAYTA_ALOQA", "BOGLANILGAN"] as const;
-const SORT_BY_VALUES = ["createdAt", "resultScore", "resultUpdatedAt", "resultStatus"] as const;
-const SORT_DIR_VALUES = ["asc", "desc"] as const;
 const DELETE_BATCH_LIMIT = 200;
-const PAGE_SIZE_VALUES = [15, 30, 50] as const;
-
-function parsePageSize(raw: string | null) {
-  const numeric = Number.parseInt(raw ?? "", 10);
-  if (!Number.isFinite(numeric)) return 15;
-  return PAGE_SIZE_VALUES.includes(numeric as (typeof PAGE_SIZE_VALUES)[number]) ? numeric : 15;
-}
-
-function parseDateInput(raw: string | null) {
-  const value = (raw ?? "").trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
-}
-
-function tashkentDayStart(value: string) {
-  return new Date(`${value}T00:00:00+05:00`);
-}
 
 function getContactStatusLabel(value: (typeof CONTACT_STATUS_VALUES)[number]) {
   if (value === "BOGLANIB_BOLMADI") return "Bog'lanib bo'lmadi";
@@ -252,49 +168,17 @@ export async function GET(req: NextRequest) {
   }
 
   const format = req.nextUrl.searchParams.get("format");
-  const holat = parseEnum(req.nextUrl.searchParams.get("holat"), HOLAT_VALUES);
-  const yoshGuruhi = parseEnum(req.nextUrl.searchParams.get("yoshGuruhi"), YOSH_VALUES);
-  const yonalish = parseEnum(req.nextUrl.searchParams.get("yonalish"), YONALISH_VALUES);
-  const utmType = parseEnum(req.nextUrl.searchParams.get("utmType"), UTM_TYPE_VALUES);
-  const smsStatus = parseEnum(req.nextUrl.searchParams.get("smsStatus"), SMS_STATUS_VALUES);
-  const contactStatus = parseEnum(req.nextUrl.searchParams.get("contactStatus"), CONTACT_STATUS_VALUES);
   const qRaw = req.nextUrl.searchParams.get("q") ?? "";
-  const q = qRaw.trim();
-  parsePageSize(req.nextUrl.searchParams.get("pageSize"));
-  const dateFrom = parseDateInput(req.nextUrl.searchParams.get("dateFrom"));
-  const dateTo = parseDateInput(req.nextUrl.searchParams.get("dateTo"));
-  const sortBy = parseEnum(req.nextUrl.searchParams.get("sortBy"), SORT_BY_VALUES) ?? "createdAt";
-  const sortDir = parseEnum(req.nextUrl.searchParams.get("sortDir"), SORT_DIR_VALUES) ?? "desc";
-  const duplicatesOnly = req.nextUrl.searchParams.get("duplicates") === "1";
-
-  if (q.length > 80) {
+  if (qRaw.trim().length > 80) {
     return NextResponse.json(
       { error: "Qidiruv matni juda uzun", code: "QUERY_TOO_LONG" },
       { status: 422, headers: { "x-request-id": requestId } }
     );
   }
+  const filters = parseAdminRegistrationsFilters(req.nextUrl.searchParams);
 
-  const where: RoyxatWhereInput = { deletedAt: null };
-  if (holat) where.holat = holat;
-  if (yoshGuruhi) where.yoshGuruhi = yoshGuruhi;
-  if (yonalish) where.yonalish = yonalish;
-  if (utmType) where.utmType = utmType;
-  if (smsStatus) where.smsStatus = smsStatus;
-  if (contactStatus) where.aloqaStatus = contactStatus;
-  if (dateFrom || dateTo) {
-    const createdAt: DateTimeFilter = {};
-    if (dateFrom) {
-      createdAt.gte = tashkentDayStart(dateFrom);
-    }
-    if (dateTo) {
-      createdAt.lt = new Date(tashkentDayStart(dateTo).getTime() + 24 * 60 * 60 * 1000);
-    }
-    where.createdAt = createdAt;
-  }
-  if (q) {
-    where.OR = buildSearchOr(q);
-  }
-  if (duplicatesOnly) {
+  const where = buildAdminRegistrationsWhere(filters);
+  if (filters.duplicatesOnly) {
     let duplicateNameKeys: string[] = [];
     try {
       const rows = await db.$queryRaw<Array<{ nameKey: string }>>`
@@ -315,14 +199,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const orderBy: RoyxatOrderByWithRelationInput[] =
-    sortBy === "createdAt"
-      ? [{ createdAt: sortDir }]
-      : sortBy === "resultScore"
-        ? [{ resultScore: { sort: sortDir, nulls: "last" } }, { createdAt: "desc" }]
-        : sortBy === "resultUpdatedAt"
-          ? [{ resultUpdatedAt: { sort: sortDir, nulls: "last" } }, { createdAt: "desc" }]
-          : [{ resultStatus: { sort: sortDir, nulls: "last" } }, { createdAt: "desc" }];
+  const orderBy = buildAdminRegistrationsOrderBy(filters);
 
   let royxatlar;
   try {

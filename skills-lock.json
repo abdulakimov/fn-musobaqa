@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "framer-motion-animations": {
+      "source": "smithery.ai",
+      "sourceType": "well-known",
+      "computedHash": "1016480b95f9b0b133411bd25ab1eb4f51f2bf73e0495f7115d7475aeaa6979d"
+    },
+    "ui-audit": {
+      "source": "smithery.ai",
+      "sourceType": "well-known",
+      "computedHash": "cf53de4598949aa0ee85a843a5bc29b017cf2785f1211c851dbf5226ea51bacd"
+    }
+  }
+}

@@ -277,3 +277,116 @@
   }
 }
 
+/* Sonner toast system */
+[data-sonner-toaster] {
+  --width: min(420px, calc(100vw - 32px)) !important;
+}
+
+.app-toast {
+  border-radius: 14px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 10px 26px rgba(20, 24, 48, 0.1) !important;
+  padding: 12px 16px !important;
+  background: #fff !important;
+  color: var(--foreground) !important;
+  font-family: var(--font-sans) !important;
+  width: min(420px, calc(100vw - 32px)) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.app-toast-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.01em !important;
+  white-space: normal !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  text-wrap: pretty !important;
+}
+
+.app-toast-description {
+  margin-top: 2px !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  color: var(--muted-foreground) !important;
+}
+
+.app-toast-icon {
+  width: 16px !important;
+  height: 16px !important;
+  stroke-width: 2.2 !important;
+}
+
+.app-toast [data-content] {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.app-toast [data-title] {
+  margin: 0 !important;
+}
+
+.app-toast [data-description] {
+  margin: 2px 0 0 !important;
+}
+
+.app-toast [data-icon] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  align-self: center !important;
+}
+
+@media (max-width: 640px) {
+  [data-sonner-toaster] {
+    --width: calc(100vw - 24px) !important;
+  }
+
+  .app-toast {
+    width: calc(100vw - 24px) !important;
+    padding: 12px 14px !important;
+  }
+}
+
+.app-toast-success {
+  border-color: rgba(22, 163, 74, 0.3) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f4fcf7 100%) !important;
+}
+
+.app-toast-success .app-toast-icon-success {
+  color: #15803d !important;
+}
+
+.app-toast-error {
+  border-color: rgba(220, 38, 38, 0.32) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fff4f4 100%) !important;
+}
+
+.app-toast-error .app-toast-icon-error {
+  color: #b91c1c !important;
+}
+
+.app-toast-warning {
+  border-color: rgba(217, 119, 6, 0.32) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fff8ed 100%) !important;
+}
+
+.app-toast-warning .app-toast-icon-warning {
+  color: #b45309 !important;
+}
+
+.app-toast-info {
+  border-color: rgba(29, 78, 216, 0.28) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f2f8ff 100%) !important;
+}
+
+.app-toast-info .app-toast-icon-info {
+  color: #1d4ed8 !important;
+}

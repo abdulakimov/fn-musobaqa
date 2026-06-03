@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { appToast as toast } from "@/lib/toast";
 import { formatUzPhone, UZ_PREFIX } from "@/lib/phone";
 
 interface ProfileLoginFormProps {
@@ -92,7 +92,7 @@ export function ProfileLoginForm({
           name="participantId"
           required
           value={participantId}
-          placeholder="A1111 yoki T1111"
+          placeholder="A1111 yoki K1111"
           className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm uppercase outline-none focus:border-electric-blue/60 focus:ring-2 focus:ring-electric-blue/30"
           onChange={(event) => setParticipantId(event.target.value.toUpperCase())}
         />
@@ -115,3 +115,4 @@ export function ProfileLoginForm({
     </form>
   );
 }
+

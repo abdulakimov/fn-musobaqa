@@ -6,6 +6,12 @@ import { ExportButton } from "@/components/admin/ExportButton";
 import { AdminFilters } from "@/components/admin/AdminFilters";
 import { YONALISH_LABELS, YOSH_GURUH_LABELS } from "@/lib/validations";
 import { hasAdminSession } from "@/lib/admin-auth";
+import {
+  buildAdminRegistrationsFilterQuery,
+  buildAdminRegistrationsOrderBy,
+  buildAdminRegistrationsWhere,
+  parseAdminRegistrationsFilters,
+} from "@/lib/admin-registration-filters";
 
 interface SearchParams {
   holat?: string;
@@ -25,173 +31,38 @@ interface SearchParams {
   duplicates?: string;
 }
 
-type SortDir = "asc" | "desc";
-
-type DateTimeFilter = {
-  gte?: Date;
-  lt?: Date;
-};
-
-type RoyxatWhereInput = {
-  [key: string]: unknown;
-  OR?: RoyxatWhereInput[];
-  AND?: RoyxatWhereInput[];
-  createdAt?: DateTimeFilter;
-  id?: string;
-  nameKey?: { in: string[] };
-};
-
-type RoyxatOrderByWithRelationInput = Record<string, SortDir | { sort: SortDir; nulls: "last" }>;
-
-const HOLAT_VALUES = ["KUTILMOQDA", "TASDIQLANDI", "RAD_ETILDI"] as const;
-const YOSH_VALUES = ["YOSH_9_11", "YOSH_12_14", "YOSH_9_14"] as const;
-const YONALISH_VALUES = ["MATEMATIKA", "TYPING"] as const;
-const UTM_TYPE_VALUES = ["MAKTAB", "BANNER", "ORGANIK"] as const;
-const SMS_STATUS_VALUES = ["PENDING", "SENT", "FAILED"] as const;
-const CONTACT_STATUS_VALUES = ["BOGLANILMAGAN", "BOGLANIB_BOLMADI", "QAYTA_ALOQA", "BOGLANILGAN"] as const;
-const KELISH_STATUS_VALUES = ["KELGAN", "KELMADI"] as const;
-const PAGE_SIZE_VALUES = [15, 30, 50] as const;
-const DEFAULT_PAGE_SIZE = 15;
-const SORT_BY_VALUES = ["createdAt", "resultScore", "resultUpdatedAt", "resultStatus"] as const;
-const SORT_DIR_VALUES = ["asc", "desc"] as const;
-
-function getSanitizedSearchQuery(raw: string | undefined) {
-  const value = (raw ?? "").trim();
-  if (!value) return "";
-  return value.slice(0, 80);
-}
-
-function getDigitsOnly(value: string) {
-  return value.replace(/\D/g, "");
-}
-
-function getSearchTokens(value: string) {
-  return value
-    .toLowerCase()
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0)
-    .slice(0, 6);
-}
-
-function buildSearchOr(searchQuery: string): RoyxatWhereInput[] {
-  const digitsQuery = getDigitsOnly(searchQuery);
-  const tokens = getSearchTokens(searchQuery);
-
-  const directConditions: RoyxatWhereInput[] = [
-    { ism: { contains: searchQuery, mode: "insensitive" } },
-    { familiya: { contains: searchQuery, mode: "insensitive" } },
-    { otasiningIsmi: { contains: searchQuery, mode: "insensitive" } },
-    { participantId: { contains: searchQuery, mode: "insensitive" } },
-    { telefon: { contains: searchQuery } },
-  ];
-
-  if (digitsQuery && digitsQuery !== searchQuery) {
-    directConditions.push({ telefon: { contains: digitsQuery } });
-  }
-
-  if (tokens.length <= 1) {
-    return directConditions;
-  }
-
-  return [
-    ...directConditions,
-    {
-      AND: tokens.map((token) => ({
-        OR: [
-          { ism: { contains: token, mode: "insensitive" } },
-          { familiya: { contains: token, mode: "insensitive" } },
-          { otasiningIsmi: { contains: token, mode: "insensitive" } },
-          { participantId: { contains: token, mode: "insensitive" } },
-        ],
-      })),
-    },
-  ];
-}
-
-function parseEnum<T extends readonly string[]>(raw: string | undefined, values: T): T[number] | undefined {
-  if (!raw) return undefined;
-  return (values as readonly string[]).includes(raw) ? (raw as T[number]) : undefined;
-}
-
-function parsePage(raw: string | undefined) {
-  const numeric = Number.parseInt(raw ?? "", 10);
-  if (!Number.isFinite(numeric) || numeric < 1) return 1;
-  return numeric;
-}
-
-function parsePageSize(raw: string | undefined) {
-  const numeric = Number.parseInt(raw ?? "", 10);
-  if (!Number.isFinite(numeric)) return DEFAULT_PAGE_SIZE;
-  if (!PAGE_SIZE_VALUES.includes(numeric as (typeof PAGE_SIZE_VALUES)[number])) return DEFAULT_PAGE_SIZE;
-  return numeric;
-}
-
-function parseDateInput(raw: string | undefined) {
-  const value = (raw ?? "").trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined;
-}
-
-function tashkentDayStart(value: string) {
-  return new Date(`${value}T00:00:00+05:00`);
-}
-
 export default async function AdminPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const holat = parseEnum(params.holat, HOLAT_VALUES);
-  const contactStatus = parseEnum(params.contactStatus, CONTACT_STATUS_VALUES);
-  const yoshGuruhi = parseEnum(params.yoshGuruhi, YOSH_VALUES);
-  const yonalish = parseEnum(params.yonalish, YONALISH_VALUES);
-  const utmType = parseEnum(params.utmType, UTM_TYPE_VALUES);
-  const smsStatus = parseEnum(params.smsStatus, SMS_STATUS_VALUES);
-  const kelishStatus = parseEnum(params.kelishStatus, KELISH_STATUS_VALUES);
-  const sortBy = parseEnum(params.sortBy, SORT_BY_VALUES) ?? "createdAt";
-  const sortDir = parseEnum(params.sortDir, SORT_DIR_VALUES) ?? "desc";
-  const pageSize = parsePageSize(params.pageSize);
-  const dateFrom = parseDateInput(params.dateFrom);
-  const dateTo = parseDateInput(params.dateTo);
-  const duplicatesOnly = params.duplicates === "1";
-  const orderBy: RoyxatOrderByWithRelationInput[] =
-    sortBy === "createdAt"
-      ? [{ createdAt: sortDir }]
-      : sortBy === "resultScore"
-        ? [{ resultScore: { sort: sortDir, nulls: "last" } }, { createdAt: "desc" }]
-        : sortBy === "resultUpdatedAt"
-          ? [{ resultUpdatedAt: { sort: sortDir, nulls: "last" } }, { createdAt: "desc" }]
-          : [{ resultStatus: { sort: sortDir, nulls: "last" } }, { createdAt: "desc" }];
-  const searchQuery = getSanitizedSearchQuery(params.q);
-  const requestedPage = parsePage(params.page);
+  const filters = parseAdminRegistrationsFilters(params as Record<string, string | string[] | undefined>);
+  const {
+    holat,
+    contactStatus,
+    yoshGuruhi,
+    yonalish,
+    utmType,
+    smsStatus,
+    kelishStatus,
+    sortBy,
+    sortDir,
+    pageSize,
+    dateFrom,
+    dateTo,
+    duplicatesOnly,
+    q: searchQuery,
+    page: requestedPage,
+  } = filters;
+  const orderBy = buildAdminRegistrationsOrderBy(filters);
   const store = await cookies();
 
   if (!hasAdminSession(store)) {
     redirect("/admin/login");
   }
 
-  const where: RoyxatWhereInput = { deletedAt: null };
-  if (holat) where.holat = holat;
-  if (contactStatus) where.aloqaStatus = contactStatus;
-  if (yoshGuruhi) where.yoshGuruhi = yoshGuruhi;
-  if (yonalish) where.yonalish = yonalish;
-  if (utmType) where.utmType = utmType;
-  if (smsStatus) where.smsStatus = smsStatus;
-  if (kelishStatus) where.kelishStatus = kelishStatus;
-  if (dateFrom || dateTo) {
-    const createdAt: DateTimeFilter = {};
-    if (dateFrom) {
-      createdAt.gte = tashkentDayStart(dateFrom);
-    }
-    if (dateTo) {
-      createdAt.lt = new Date(tashkentDayStart(dateTo).getTime() + 24 * 60 * 60 * 1000);
-    }
-    where.createdAt = createdAt;
-  }
-  if (searchQuery) {
-    where.OR = buildSearchOr(searchQuery);
-  }
+  const where = buildAdminRegistrationsWhere(filters);
   if (duplicatesOnly) {
     let duplicateNameKeys: string[] = [];
     try {
@@ -256,7 +127,7 @@ export default async function AdminPage({
   let yonalishMap: Record<string, number> = {};
   let kelishMap: Record<string, number> = {};
 
-  const loadDashboardData = async (activeWhere: RoyxatWhereInput) => {
+  const loadDashboardData = async (activeWhere: typeof where) => {
     let dbFilteredCount = 0;
     let holatStats: Array<{ holat: string; _count: { _all: number } }> = [];
     let dbTotal = 0;
@@ -400,31 +271,20 @@ export default async function AdminPage({
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex-1" />
-          <ExportButton
-            filters={{
-              ...(holat ? { holat } : {}),
-              ...(yoshGuruhi ? { yoshGuruhi } : {}),
-              ...(yonalish ? { yonalish } : {}),
-              ...(utmType ? { utmType } : {}),
-              ...(smsStatus ? { smsStatus } : {}),
-              ...(contactStatus ? { contactStatus } : {}),
-              ...(kelishStatus ? { kelishStatus } : {}),
-              ...(searchQuery ? { q: searchQuery } : {}),
-              ...(dateFrom ? { dateFrom } : {}),
-              ...(dateTo ? { dateTo } : {}),
-              ...(sortBy ? { sortBy } : {}),
-              ...(sortDir ? { sortDir } : {}),
-              ...(pageSize !== DEFAULT_PAGE_SIZE ? { pageSize: String(pageSize) } : {}),
-              ...(duplicatesOnly ? { duplicates: "1" } : {}),
-            }}
-          />
+          <ExportButton filters={buildAdminRegistrationsFilterQuery(filters)} />
         </div>
 
         <AdminFilters
           holat={holat}
+          contactStatus={contactStatus}
           yoshGuruhi={yoshGuruhi}
           yonalish={yonalish}
+          utmType={utmType}
+          smsStatus={smsStatus}
+          kelishStatus={kelishStatus}
           query={searchQuery}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
           yoshOptions={Object.entries(YOSH_GURUH_LABELS) as [string, string][]}
           yonalishOptions={Object.entries(YONALISH_LABELS) as [string, string][]}
         />
@@ -444,10 +304,12 @@ export default async function AdminPage({
         totalPages={totalPages}
         queryState={{
           holat,
+          contactStatus,
           yoshGuruhi,
           yonalish,
           utmType,
           smsStatus,
+          kelishStatus,
           q: searchQuery || undefined,
           pageSize: String(pageSize),
           dateFrom,

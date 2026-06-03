@@ -8,7 +8,6 @@ import type { RequirementsSectionContent } from "@/lib/site-content";
 const DEFAULT_REQUIREMENTS = [
   { text: "9-11 yoki 12-14 yosh toifasidagi o'quvchi bo'lish", required: true },
   { text: "Ota-ona yoki vasiy hamrohligida kelish", required: true },
-  { text: "Tug'ilganlik haqida ma'lumotnoma (original yoki nusxa)", required: true },
   { text: "3x4 sm foto (ro'yxatdan o'tish uchun)", required: true },
   { text: "Musobaqa kuni belgilangan vaqtda kelish", required: true },
   { text: "Shaxsiy qurilma olib kelish", required: false },
@@ -16,7 +15,7 @@ const DEFAULT_REQUIREMENTS = [
 ];
 
 const DEFAULT_BENEFITS = [
-  { iconKey: "certificate", text: "Akademiya uchun sertifikat va imtiyozlar" },
+  { iconKey: "certificate", text: "Akademiya uchun imtiyozlar" },
   { iconKey: "award", text: "Barcha ishtirokchilarga qatnashish sertifikati" },
   { iconKey: "gift", text: "Ishtirokchilarga sovg'alar va esdalik buyumlar" },
   { iconKey: "camera", text: "Professional fotosurat va video suratga olish" },
@@ -48,13 +47,13 @@ export function RequirementsSection({ data }: RequirementsSectionProps) {
             <h3 className="mb-5 text-xl font-display font-semibold text-electric-blue">{data?.requirementsTitle ?? "Talablar"}</h3>
             <ul className="space-y-2.5">
               {requirements.map(({ text, required }) => (
-                <li key={text} className="ui-surface-soft flex items-start gap-3 px-3 py-2.5">
+                <li key={text} className="ui-surface-soft flex min-h-[56px] items-center gap-3 px-3 py-2.5">
                   {required ? (
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-blue/12 text-brand-blue">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-blue/12 text-brand-blue">
                       <CheckIcon className="h-3.5 w-3.5" />
                     </span>
                   ) : (
-                    <XCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+                    <XCircleIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
                   )}
                   <span className={required ? "text-sm leading-relaxed text-foreground" : "text-sm leading-relaxed text-muted-foreground"}>
                     {required ? text : `${optionalPrefix}: ${text}`}
@@ -70,7 +69,7 @@ export function RequirementsSection({ data }: RequirementsSectionProps) {
             <h3 className="mb-5 text-xl font-display font-semibold text-secondary-foreground">{data?.benefitsTitle ?? "Nima olasiz?"}</h3>
             <ul className="space-y-2.5">
               {benefits.map(({ iconKey, text }) => (
-                <li key={text} className="ui-surface-soft flex items-center gap-3 px-3 py-2.5">
+                <li key={text} className="ui-surface-soft flex min-h-[56px] items-center gap-3 px-3 py-2.5">
                   <SectionIcon iconKey={iconKey} size={16} tone="orange" containerVariant="circle" />
                   <span className="text-sm leading-relaxed text-foreground">{text}</span>
                 </li>

@@ -13,9 +13,9 @@ test("real-touch mobile interactions work", async ({ page }) => {
   await expect(page.locator("#mobile-nav")).toBeHidden();
   await expect(page.locator("#faq")).toBeInViewport();
 
-  const faqTrigger = page.getByRole("button", { name: "Musobaqa pullikmi?", exact: true });
+  const faqTrigger = page.getByRole("button", { name: "Natijalar qanday e'lon qilinadi?", exact: true });
   await faqTrigger.tap();
-  await expect(page.getByText("mutlaqo bepul")).toBeVisible();
+  await expect(page.getByText("Telegram kanalida")).toBeVisible();
 
   await page.goto("/");
   await page.getByLabel(/pastga bo'limiga o'tish/i).tap();

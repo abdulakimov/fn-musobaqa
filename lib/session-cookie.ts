@@ -7,32 +7,46 @@ function isProduction() {
   return process.env.NODE_ENV === "production";
 }
 
-function baseCookieOptions() {
+function shouldUseSecureCookie(request?: Request) {
+  if (!isProduction()) return false;
+  if (!request) return true;
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  if (forwardedProto) {
+    return forwardedProto.toLowerCase().includes("https");
+  }
+  try {
+    return new URL(request.url).protocol === "https:";
+  } catch {
+    return true;
+  }
+}
+
+function baseCookieOptions(request?: Request) {
   return {
     httpOnly: true,
     sameSite: "lax" as SameSite,
-    secure: isProduction(),
+    secure: shouldUseSecureCookie(request),
     path: "/",
   };
 }
 
-export function participantSessionCookieOptions() {
+export function participantSessionCookieOptions(request?: Request) {
   return {
-    ...baseCookieOptions(),
+    ...baseCookieOptions(request),
     maxAge: PARTICIPANT_MAX_AGE_SECONDS,
   };
 }
 
-export function adminSessionCookieOptions() {
+export function adminSessionCookieOptions(request?: Request) {
   return {
-    ...baseCookieOptions(),
+    ...baseCookieOptions(request),
     maxAge: ADMIN_MAX_AGE_SECONDS,
   };
 }
 
-export function clearedSessionCookieOptions() {
+export function clearedSessionCookieOptions(request?: Request) {
   return {
-    ...baseCookieOptions(),
+    ...baseCookieOptions(request),
     maxAge: 0,
     expires: new Date(0),
   };

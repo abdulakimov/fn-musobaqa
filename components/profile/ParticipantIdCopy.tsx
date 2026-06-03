@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { CopyIcon, CheckIcon } from "lucide-react";
-import { toast } from "sonner";
+import { appToast as toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 
 interface ParticipantIdCopyProps {
   participantId: string;
+  className?: string;
 }
 
-export function ParticipantIdCopy({ participantId }: ParticipantIdCopyProps) {
+export function ParticipantIdCopy({ participantId, className }: ParticipantIdCopyProps) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -26,7 +28,10 @@ export function ParticipantIdCopy({ participantId }: ParticipantIdCopyProps) {
     <button
       type="button"
       onClick={copy}
-      className="ml-2 inline-flex cursor-pointer items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs font-medium text-electric-blue transition-colors hover:bg-electric-blue/10"
+      className={cn(
+        "ml-2 inline-flex cursor-pointer items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs font-medium text-electric-blue transition-colors hover:bg-electric-blue/10",
+        className
+      )}
       aria-label="ID ni nusxalash"
     >
       {copied ? <CheckIcon className="h-3.5 w-3.5" /> : <CopyIcon className="h-3.5 w-3.5" />}
@@ -34,3 +39,4 @@ export function ParticipantIdCopy({ participantId }: ParticipantIdCopyProps) {
     </button>
   );
 }
+

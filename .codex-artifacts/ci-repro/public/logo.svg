@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 44" fill="none">
+  <defs>
+    <linearGradient id="gR" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4FACFF"/>
+      <stop offset="100%" stop-color="#4071FF"/>
+    </linearGradient>
+    <linearGradient id="gO" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3FC8C0"/>
+      <stop offset="100%" stop-color="#28B5AD"/>
+    </linearGradient>
+    <linearGradient id="gB1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#88CC2A"/>
+      <stop offset="100%" stop-color="#68B82A"/>
+    </linearGradient>
+    <linearGradient id="gB2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD01B"/>
+      <stop offset="100%" stop-color="#FFC10B"/>
+    </linearGradient>
+    <linearGradient id="gI" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9A1B"/>
+      <stop offset="100%" stop-color="#FF7D00"/>
+    </linearGradient>
+    <linearGradient id="gT" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6135"/>
+      <stop offset="100%" stop-color="#F94A20"/>
+    </linearGradient>
+  </defs>
+
+  <!-- R -->
+  <text x="2" y="34" font-family="'Arial Rounded MT Bold','Nunito','Arial',sans-serif" font-size="38" font-weight="900" fill="url(#gR)">R</text>
+  <!-- o -->
+  <text x="29" y="34" font-family="'Arial Rounded MT Bold','Nunito','Arial',sans-serif" font-size="38" font-weight="900" fill="url(#gO)">o</text>
+  <!-- b -->
+  <text x="54" y="34" font-family="'Arial Rounded MT Bold','Nunito','Arial',sans-serif" font-size="38" font-weight="900" fill="url(#gB1)">b</text>
+  <!-- b -->
+  <text x="78" y="34" font-family="'Arial Rounded MT Bold','Nunito','Arial',sans-serif" font-size="38" font-weight="900" fill="url(#gB2)">b</text>
+  <!-- i -->
+  <text x="103" y="34" font-family="'Arial Rounded MT Bold','Nunito','Arial',sans-serif" font-size="38" font-weight="900" fill="url(#gI)">i</text>
+  <!-- t -->
+  <text x="117" y="34" font-family="'Arial Rounded MT Bold','Nunito','Arial',sans-serif" font-size="38" font-weight="900" fill="url(#gT)">t</text>
+</svg>

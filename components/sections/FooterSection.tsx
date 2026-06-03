@@ -56,7 +56,8 @@ export function FooterSection({ settings, content }: FooterSectionProps) {
   const phone = settings?.phone ?? "78-777-3-777";
   const email = settings?.email ?? "info@robbit.uz";
   const website = settings?.website ?? "robbit.uz";
-  const address = settings?.address ?? "Farg'ona viloyati, Farg'ona shahri";
+  const address = settings?.address ?? "Farg'ona viloyati, Fag'ona shahri, Najot Ta'lim binosi";
+  const mapUrl = settings?.mapUrl ?? "https://yandex.uz/maps/-/CPfhBImd";
   const socials = [
     { label: "Telegram", href: settings?.telegram ?? "https://t.me/robbituz", platform: "telegram" as const },
     { label: "Instagram", href: settings?.instagram ?? "https://www.instagram.com/robbituz/", platform: "instagram" as const },
@@ -106,7 +107,9 @@ export function FooterSection({ settings, content }: FooterSectionProps) {
             <ul className="space-y-3">
               <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
                 <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-electric-blue" />
-                {address}
+                <a href={mapUrl} target="_blank" rel="noreferrer" className="transition-colors hover:text-electric-blue">
+                  {address}
+                </a>
               </li>
               <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
                 <PhoneIcon className="h-4 w-4 shrink-0 text-electric-blue" />
